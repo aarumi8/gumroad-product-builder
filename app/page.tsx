@@ -1,11 +1,16 @@
+"use client"
+
 import Sidebar from '@/components/shared/sidebar'
 import MainContent from '@/components/shared/main-content'
+import { ComponentProvider } from '@/context/component-context'
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen">
-      <Sidebar />
-      <MainContent />
-    </main>
+    <ComponentProvider>
+      <main className="flex min-h-screen bg-gray-50">
+        <Sidebar />
+        <MainContent />
+      </main>
+    </ComponentProvider>
   )
 }

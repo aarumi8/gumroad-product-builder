@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Menu, ChevronDown, ChevronRight } from "lucide-react"
 import { useState } from "react"
 import { TemplateCard } from "./template-card";
+import { useComponents } from "@/context/component-context";
 
 interface SectionItem {
   id: string;
@@ -98,6 +99,11 @@ const sections: Section[] = [
 export default function Sidebar() {
   const [openSections, setOpenSections] = useState<string[]>([])
 
+    // Get MainContent's addComponent function
+  // We'll use this pattern for communication between components
+  const mainContent = document.getElementById('main-content')
+  const { addComponent } = useComponents()
+
   const toggleSection = (title: string) => {
     setOpenSections(prev => 
       prev.includes(title) 
@@ -107,8 +113,7 @@ export default function Sidebar() {
   }
 
   const handleTemplateClick = (id: string) => {
-    console.log(`Selected template: ${id}`)
-    // Here you'll handle the template selection
+    addComponent(id)
   }
 
   const SidebarContent = () => (
@@ -148,7 +153,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile trigger */}
-      <div className="lg:hidden fixed left-4 top-4">
+      <div className="lg:hidden fixed left-4 top-4 z-50">
         <Sheet>
           <SheetTrigger asChild>
             <Button variant="outline" size="icon">
@@ -161,10 +166,12 @@ export default function Sidebar() {
         </Sheet>
       </div>
 
-      {/* Desktop sidebar */}
-      <div className="hidden lg:block w-[300px] border-r bg-background h-screen overflow-y-auto">
+      {/* Desktop sidebar - now fixed */}
+      <div className="hidden lg:block fixed left-0 top-0 w-[300px] border-r bg-background h-screen overflow-y-auto">
         <SidebarContent />
       </div>
+      {/* Spacer div to offset the fixed sidebar */}
+      <div className="hidden lg:block w-[300px]" />
     </>
   )
 }
