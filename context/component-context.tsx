@@ -1,14 +1,18 @@
+// context/component-context.tsx
 import { createContext, useContext, useState, ReactNode } from 'react'
+import { templates } from '@/config/templates'
 
 interface Component {
   id: string;
   type: string;
+  initialData?: any;
 }
 
 interface ComponentContextType {
   components: Component[];
   addComponent: (componentId: string) => void;
-  deleteComponent: (componentId: string) => void; // Add delete function
+  loadTemplate: (templateId: string) => void;
+  deleteComponent: (componentId: string) => void; // Added this
 }
 
 const ComponentContext = createContext<ComponentContextType | undefined>(undefined)
@@ -24,12 +28,29 @@ export function ComponentProvider({ children }: { children: ReactNode }) {
     setComponents(prev => [...prev, newComponent])
   }
 
+  const loadTemplate = (templateId: string) => {
+    const template = templates[templateId]
+    if (template) {
+      const newComponents = template.components.map(comp => ({
+        id: `${comp.type}-${Date.now()}`,
+        type: comp.type,
+        initialData: comp.initialData
+      }))
+      setComponents(newComponents)
+    }
+  }
+
   const deleteComponent = (componentId: string) => {
-    setComponents(prev => prev.filter(component => component.id !== componentId))
+    setComponents(prev => prev.filter(comp => comp.id !== componentId))
   }
 
   return (
-    <ComponentContext.Provider value={{ components, addComponent, deleteComponent }}>
+    <ComponentContext.Provider value={{ 
+      components, 
+      addComponent, 
+      loadTemplate, 
+      deleteComponent  // Added this
+    }}>
       {children}
     </ComponentContext.Provider>
   )

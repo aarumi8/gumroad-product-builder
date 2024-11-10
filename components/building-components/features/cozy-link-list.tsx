@@ -7,17 +7,20 @@ import { useComponents } from "@/context/component-context"
 
 interface CozyLinkListProps {
   id: string;
+  initialData?: {
+    items: string[];
+  };
 }
 
-export function CozyLinkList({ id }: CozyLinkListProps) {
+export function CozyLinkList({ id, initialData }: CozyLinkListProps) {
   const { deleteComponent } = useComponents()
-  const [items, setItems] = useState([
-    "Seamless integration with popular design tools and platforms",
-    "Real-time collaboration features for team productivity",
-    "Advanced exporting options in multiple formats",
-    "Customizable themes and unique styling options",
-    "Automatic cloud backup and version history"
-  ])
+  const [items, setItems] = useState(initialData?.items || [
+    "Integration with popular design tools",
+    "Real-time collaboration features",
+    "Advanced exporting options",
+    "Custom themes and styling",
+    "Automatic backup and versioning"
+  ]);
 
   const [isEditing, setIsEditing] = useState(false)
   const [editedItems, setEditedItems] = useState(items)

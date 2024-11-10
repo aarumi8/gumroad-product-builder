@@ -12,25 +12,30 @@ interface Testimonial {
 
 interface ThreeTestimonialsProps {
   id: string;
+  initialData?: {
+    testimonials: Testimonial[];
+  };
 }
 
-export function ThreeTestimonials({ id }: ThreeTestimonialsProps) {
+export function ThreeTestimonials({ id, initialData }: ThreeTestimonialsProps) {
   const { deleteComponent } = useComponents()
   const [isEditing, setIsEditing] = useState(false)
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([
-    {
-      text: "This product has completely transformed how we work. The efficiency gains are remarkable.",
-      author: "Alex Chen"
-    },
-    {
-      text: "Outstanding support team and regular updates. They really listen to user feedback.",
-      author: "Maria Garcia"
-    },
-    {
-      text: "Intuitive interface and powerful features. Exactly what our team needed.",
-      author: "James Wilson"
-    }
-  ])
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(
+    initialData?.testimonials || [
+      {
+        text: "This product has completely transformed how we work. The efficiency gains are remarkable.",
+        author: "Alex Chen"
+      },
+      {
+        text: "Outstanding support team and regular updates. They really listen to user feedback.",
+        author: "Maria Garcia"
+      },
+      {
+        text: "Intuitive interface and powerful features. Exactly what our team needed.",
+        author: "James Wilson"
+      }
+    ]
+  );
   const [editedTestimonials, setEditedTestimonials] = useState(testimonials)
 
   const saveChanges = () => {

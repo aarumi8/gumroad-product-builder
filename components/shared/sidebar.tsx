@@ -6,6 +6,7 @@ import { Menu, ChevronDown, ChevronRight } from "lucide-react"
 import { useState } from "react"
 import { TemplateCard } from "./template-card";
 import { useComponents } from "@/context/component-context";
+import { templates } from "@/config/templates";
 
 interface SectionItem {
   id: string;
@@ -98,11 +99,7 @@ const sections: Section[] = [
 
 export default function Sidebar() {
   const [openSections, setOpenSections] = useState<string[]>([])
-
-    // Get MainContent's addComponent function
-  // We'll use this pattern for communication between components
-  const mainContent = document.getElementById('main-content')
-  const { addComponent } = useComponents()
+  const { addComponent, loadTemplate } = useComponents()
 
   const toggleSection = (title: string) => {
     setOpenSections(prev => 
@@ -113,7 +110,12 @@ export default function Sidebar() {
   }
 
   const handleTemplateClick = (id: string) => {
-    addComponent(id)
+    // Check if the clicked item is a template
+    if (Object.keys(templates).includes(id)) {
+      loadTemplate(id)
+    } else {
+      addComponent(id)
+    }
   }
 
   const SidebarContent = () => (

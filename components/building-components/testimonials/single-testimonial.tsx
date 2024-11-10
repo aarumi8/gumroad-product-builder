@@ -7,16 +7,21 @@ import { useComponents } from "@/context/component-context"
 
 interface SingleTestimonialProps {
   id: string;
+  initialData?: {
+    text: string;
+    author: string;
+    role: string;
+  };
 }
 
-export function SingleTestimonial({ id }: SingleTestimonialProps) {
+export function SingleTestimonial({ id, initialData }: SingleTestimonialProps) {
   const { deleteComponent } = useComponents()
   const [isEditing, setIsEditing] = useState(false)
   const [testimonial, setTestimonial] = useState({
-    text: "The product exceeded my expectations. The interface is intuitive, and the features are exactly what I needed. It has significantly improved my workflow and saved me countless hours.",
-    author: "Sarah Johnson",
-    role: "Product Designer"
-  })
+    text: initialData?.text || "The product exceeded my expectations. The interface is intuitive, and the features are exactly what I needed.",
+    author: initialData?.author || "Sarah Johnson",
+    role: initialData?.role || "Product Designer"
+  });
   const [editedTestimonial, setEditedTestimonial] = useState(testimonial)
 
   const saveChanges = () => {
