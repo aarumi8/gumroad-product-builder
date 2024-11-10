@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { useComponents } from "@/context/component-context"
 import Image from "next/image"
-import { init } from "next/dist/compiled/webpack/webpack"
 
 interface TextAndImageProps {
   id: string;
@@ -14,21 +13,28 @@ interface TextAndImageProps {
     description: string;
     imageUrl: string;
   };
+  isPreview?: boolean;
 }
 
-export function TextAndImage({ id, initialData }: TextAndImageProps) {
-  const { deleteComponent } = useComponents()
+export function TextAndImage({ id, initialData, isPreview }: TextAndImageProps) {
+  const { deleteComponent, updateComponentContent, components } = useComponents()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isEditing, setIsEditing] = useState(false)
-  const [content, setContent] = useState({
+
+  // Get current component's content from context
+  const currentComponent = components.find(comp => comp.id === id)
+  const defaultContent = {
     title: initialData?.title || "Transform Your Workflow",
     description: initialData?.description || "Our platform provides powerful tools and features that help you streamline your work process, increase productivity, and achieve better results. Experience the difference with our innovative solutions.",
     imageUrl: initialData?.imageUrl || "",
-  })
+  }
+
+  // Use content from context if available, otherwise use default
+  const content = currentComponent?.content || defaultContent
   const [editedContent, setEditedContent] = useState(content)
 
   const handleImageClick = () => {
-    if (!isEditing) return
+    if (!isEditing || isPreview) return
     fileInputRef.current?.click()
   }
 
@@ -44,12 +50,12 @@ export function TextAndImage({ id, initialData }: TextAndImageProps) {
   }
 
   const saveChanges = () => {
-    setContent(editedContent)
+    updateComponentContent(id, editedContent)
     setIsEditing(false)
   }
 
   const startEditing = () => {
-    setEditedContent({ ...content })
+    setEditedContent(content)
     setIsEditing(true)
   }
 
@@ -66,29 +72,31 @@ export function TextAndImage({ id, initialData }: TextAndImageProps) {
 
       <div className="max-w-6xl mx-auto">
         {/* Control Buttons */}
-        <div className="absolute right-4 top-4 flex items-center gap-2 bg-white">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
-            onClick={() => deleteComponent(id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
-            onClick={isEditing ? saveChanges : startEditing}
-          >
-            {isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
-          </Button>
-        </div>
+        {!isPreview && (
+          <div className="absolute right-4 top-4 flex items-center gap-2 bg-white">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
+              onClick={() => deleteComponent(id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
+              onClick={isEditing ? saveChanges : startEditing}
+            >
+              {isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
+            </Button>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Text Content */}
           <div className="space-y-6">
-            {isEditing ? (
+            {isEditing && !isPreview ? (
               <div className="space-y-4">
                 <Input
                   value={editedContent.title}
@@ -113,12 +121,12 @@ export function TextAndImage({ id, initialData }: TextAndImageProps) {
 
           {/* Image */}
           <div 
-            className={`aspect-[4/3] bg-gray-100 rounded-lg overflow-hidden relative ${isEditing ? 'cursor-pointer hover:bg-gray-200 transition-colors' : ''}`}
+            className={`aspect-[4/3] bg-gray-100 rounded-lg overflow-hidden relative ${isEditing && !isPreview ? 'cursor-pointer hover:bg-gray-200 transition-colors' : ''}`}
             onClick={handleImageClick}
           >
-            {(isEditing ? editedContent.imageUrl : content.imageUrl) ? (
+            {(isEditing && !isPreview ? editedContent.imageUrl : content.imageUrl) ? (
               <Image
-                src={isEditing ? editedContent.imageUrl : content.imageUrl}
+                src={isEditing && !isPreview ? editedContent.imageUrl : content.imageUrl}
                 alt={content.title}
                 fill
                 className="object-cover"
@@ -126,7 +134,7 @@ export function TextAndImage({ id, initialData }: TextAndImageProps) {
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 gap-2">
                 <ImageIcon className="h-12 w-12" />
-                {isEditing && (
+                {isEditing && !isPreview && (
                   <>
                     <Upload className="h-6 w-6" />
                     <span className="text-sm">Click to upload image</span>

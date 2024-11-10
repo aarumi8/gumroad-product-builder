@@ -10,19 +10,25 @@ interface CozyLinkListProps {
   initialData?: {
     items: string[];
   };
+  isPreview?: boolean;
 }
 
-export function CozyLinkList({ id, initialData }: CozyLinkListProps) {
-  const { deleteComponent } = useComponents()
-  const [items, setItems] = useState(initialData?.items || [
+export function CozyLinkList({ id, initialData, isPreview }: CozyLinkListProps) {
+  const { deleteComponent, updateComponentContent, components } = useComponents()
+  const [isEditing, setIsEditing] = useState(false)
+  
+  // Get current component's content from context
+  const currentComponent = components.find(comp => comp.id === id)
+  const defaultItems = [
     "Integration with popular design tools",
     "Real-time collaboration features",
     "Advanced exporting options",
     "Custom themes and styling",
     "Automatic backup and versioning"
-  ]);
-
-  const [isEditing, setIsEditing] = useState(false)
+  ]
+  
+  // Use content from context if available, otherwise use initialData or defaults
+  const items = currentComponent?.content?.items || initialData?.items || defaultItems
   const [editedItems, setEditedItems] = useState(items)
 
   const handleEdit = (index: number, value: string) => {
@@ -32,43 +38,39 @@ export function CozyLinkList({ id, initialData }: CozyLinkListProps) {
   }
 
   const saveChanges = () => {
-    setItems(editedItems)
+    updateComponentContent(id, { items: editedItems })
     setIsEditing(false)
   }
 
   const startEditing = () => {
-    setEditedItems([...items])
+    setEditedItems(items)
     setIsEditing(true)
   }
 
   return (
     <section className="relative py-16 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-100">
       <div className="max-w-4xl mx-auto">
-        {/* Control Buttons - now always visible */}
-        <div className="absolute right-4 top-4 flex items-center gap-2 bg-white">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
-            onClick={() => deleteComponent(id)}
-            aria-label="Delete section"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
-            onClick={isEditing ? saveChanges : startEditing}
-            aria-label={isEditing ? "Save changes" : "Edit section"}
-          >
-            {isEditing ? (
-              <Check className="h-4 w-4" />
-            ) : (
-              <Edit2 className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
+        {/* Control Buttons */}
+        {!isPreview && (
+          <div className="absolute right-4 top-4 flex items-center gap-2 bg-white">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
+              onClick={() => deleteComponent(id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
+              onClick={isEditing ? saveChanges : startEditing}
+            >
+              {isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
+            </Button>
+          </div>
+        )}
 
         {/* Title */}
         <div className="text-center mb-12">

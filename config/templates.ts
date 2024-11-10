@@ -56,7 +56,8 @@ export const templates: Record<string, Template> = {
           initialData: {
             title: "Transform Your Career with Our Course",
             subtitle: "Learn practical skills from industry experts through hands-on projects and real-world examples",
-            buttonText: "Enroll Now"
+            buttonText: "Enroll Now",
+            images: ["", ""]
           }
         },
         // Course features
@@ -77,7 +78,8 @@ export const templates: Record<string, Template> = {
           type: 'image-2',
           initialData: {
             title: "What You'll Learn",
-            description: "Get a glimpse of our comprehensive course content and interactive learning platform."
+            description: "Get a glimpse of our comprehensive course content and interactive learning platform.",
+            images: ["", "", "", ""]
           }
         },
         // Student testimonials

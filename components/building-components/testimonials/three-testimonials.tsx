@@ -15,31 +15,36 @@ interface ThreeTestimonialsProps {
   initialData?: {
     testimonials: Testimonial[];
   };
+  isPreview?: boolean;
 }
 
-export function ThreeTestimonials({ id, initialData }: ThreeTestimonialsProps) {
-  const { deleteComponent } = useComponents()
+export function ThreeTestimonials({ id, initialData, isPreview }: ThreeTestimonialsProps) {
+  const { deleteComponent, updateComponentContent, components } = useComponents()
   const [isEditing, setIsEditing] = useState(false)
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(
-    initialData?.testimonials || [
-      {
-        text: "This product has completely transformed how we work. The efficiency gains are remarkable.",
-        author: "Alex Chen"
-      },
-      {
-        text: "Outstanding support team and regular updates. They really listen to user feedback.",
-        author: "Maria Garcia"
-      },
-      {
-        text: "Intuitive interface and powerful features. Exactly what our team needed.",
-        author: "James Wilson"
-      }
-    ]
-  );
+
+  // Get current component's content from context
+  const currentComponent = components.find(comp => comp.id === id)
+  const defaultTestimonials = [
+    {
+      text: "This product has completely transformed how we work. The efficiency gains are remarkable.",
+      author: "Alex Chen"
+    },
+    {
+      text: "Outstanding support team and regular updates. They really listen to user feedback.",
+      author: "Maria Garcia"
+    },
+    {
+      text: "Intuitive interface and powerful features. Exactly what our team needed.",
+      author: "James Wilson"
+    }
+  ]
+
+  // Use content from context if available, otherwise use initialData or defaults
+  const testimonials = currentComponent?.content?.testimonials || initialData?.testimonials || defaultTestimonials
   const [editedTestimonials, setEditedTestimonials] = useState(testimonials)
 
   const saveChanges = () => {
-    setTestimonials(editedTestimonials)
+    updateComponentContent(id, { testimonials: editedTestimonials })
     setIsEditing(false)
   }
 
@@ -58,24 +63,26 @@ export function ThreeTestimonials({ id, initialData }: ThreeTestimonialsProps) {
     <section className="relative py-16 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-100">
       <div className="max-w-4xl mx-auto">
         {/* Control Buttons */}
-        <div className="absolute right-4 top-4 flex items-center gap-2 bg-white">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
-            onClick={() => deleteComponent(id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
-            onClick={isEditing ? saveChanges : startEditing}
-          >
-            {isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
-          </Button>
-        </div>
+        {!isPreview && (
+          <div className="absolute right-4 top-4 flex items-center gap-2 bg-white">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
+              onClick={() => deleteComponent(id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
+              onClick={isEditing ? saveChanges : startEditing}
+            >
+              {isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
+            </Button>
+          </div>
+        )}
 
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900">Customer Reviews</h2>
@@ -83,12 +90,12 @@ export function ThreeTestimonials({ id, initialData }: ThreeTestimonialsProps) {
         </div>
 
         <div className="space-y-6">
-          {(isEditing ? editedTestimonials : testimonials).map((testimonial, index) => (
+          {(isEditing && !isPreview ? editedTestimonials : testimonials).map((testimonial, index) => (
             <div 
               key={index} 
               className="bg-primary/5 rounded-2xl p-6 relative"
             >
-              {isEditing ? (
+              {isEditing && !isPreview ? (
                 <div className="space-y-4">
                   <Textarea
                     value={testimonial.text}

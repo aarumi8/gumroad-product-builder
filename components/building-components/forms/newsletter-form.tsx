@@ -10,27 +10,35 @@ interface NewsletterFormProps {
     title: string;
     subtitle: string;
     buttonText: string;
+    placeholder?: string;
   };
+  isPreview?: boolean;
 }
 
-export function NewsletterForm({ id, initialData }: NewsletterFormProps) {
-  const { deleteComponent } = useComponents()
+export function NewsletterForm({ id, initialData, isPreview }: NewsletterFormProps) {
+  const { deleteComponent, updateComponentContent, components } = useComponents()
   const [isEditing, setIsEditing] = useState(false)
-  const [content, setContent] = useState({
+
+  // Get current component's content from context
+  const currentComponent = components.find(comp => comp.id === id)
+  const defaultContent = {
     title: initialData?.title || "Subscribe to Our Newsletter",
     subtitle: initialData?.subtitle || "Stay up to date with the latest news, announcements, and articles.",
     buttonText: initialData?.buttonText || "Subscribe",
-    placeholder: "Enter your email",
-  })
+    placeholder: initialData?.placeholder || "Enter your email",
+  }
+  
+  // Use content from context if available, otherwise use default
+  const content = currentComponent?.content || defaultContent
   const [editedContent, setEditedContent] = useState(content)
 
   const saveChanges = () => {
-    setContent(editedContent)
+    updateComponentContent(id, editedContent)
     setIsEditing(false)
   }
 
   const startEditing = () => {
-    setEditedContent({ ...content })
+    setEditedContent(content)
     setIsEditing(true)
   }
 
@@ -38,27 +46,29 @@ export function NewsletterForm({ id, initialData }: NewsletterFormProps) {
     <section className="relative py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 border-b border-gray-100">
       <div className="max-w-4xl mx-auto">
         {/* Control Buttons */}
-        <div className="absolute right-4 top-4 flex items-center gap-2 bg-gray-50">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
-            onClick={() => deleteComponent(id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
-            onClick={isEditing ? saveChanges : startEditing}
-          >
-            {isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
-          </Button>
-        </div>
+        {!isPreview && (
+          <div className="absolute right-4 top-4 flex items-center gap-2 bg-gray-50">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
+              onClick={() => deleteComponent(id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
+              onClick={isEditing ? saveChanges : startEditing}
+            >
+              {isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
+            </Button>
+          </div>
+        )}
 
         <div className="max-w-2xl mx-auto text-center">
-          {isEditing ? (
+          {isEditing && !isPreview ? (
             <div className="space-y-4 mb-8">
               <Input
                 value={editedContent.title}
@@ -86,7 +96,7 @@ export function NewsletterForm({ id, initialData }: NewsletterFormProps) {
           >
             <div className="relative flex-1">
               <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-              {isEditing ? (
+              {isEditing && !isPreview ? (
                 <Input
                   value={editedContent.placeholder}
                   onChange={(e) => setEditedContent({ ...editedContent, placeholder: e.target.value })}
@@ -97,7 +107,7 @@ export function NewsletterForm({ id, initialData }: NewsletterFormProps) {
                 <Input placeholder={content.placeholder} className="pl-10" type="email" />
               )}
             </div>
-            {isEditing ? (
+            {isEditing && !isPreview ? (
               <Input
                 value={editedContent.buttonText}
                 onChange={(e) => setEditedContent({ ...editedContent, buttonText: e.target.value })}

@@ -13,53 +13,61 @@ interface ContactFormProps {
     subtitle: string;
     buttonText: string;
   };
+  isPreview?: boolean;
 }
-
-export function ContactForm({ id, initialData  }: ContactFormProps) {
-  const { deleteComponent } = useComponents()
+export function ContactForm({ id, initialData, isPreview }: ContactFormProps) {
+  const { deleteComponent, updateComponentContent, components } = useComponents()
   const [isEditing, setIsEditing] = useState(false)
-  const [content, setContent] = useState({
+  
+  // Get current component's content from context
+  const currentComponent = components.find(comp => comp.id === id)
+  const defaultContent = {
     title: initialData?.title || "Get in Touch",
     subtitle: initialData?.subtitle || "Have any questions? We'd love to hear from you.",
     buttonText: initialData?.buttonText || "Send Message"
-  });
+  }
+  
+  // Use content from context if available, otherwise use default
+  const content = currentComponent?.content || defaultContent
   const [editedContent, setEditedContent] = useState(content)
 
   const saveChanges = () => {
-    setContent(editedContent)
+    updateComponentContent(id, editedContent)
     setIsEditing(false)
   }
 
   const startEditing = () => {
-    setEditedContent({ ...content })
+    setEditedContent(content)
     setIsEditing(true)
   }
 
   return (
     <section className="relative py-16 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-100">
       <div className="max-w-4xl mx-auto">
-        {/* Control Buttons */}
-        <div className="absolute right-4 top-4 flex items-center gap-2 bg-white">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
-            onClick={() => deleteComponent(id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
-            onClick={isEditing ? saveChanges : startEditing}
-          >
-            {isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
-          </Button>
-        </div>
+        {/* Control Buttons - Only show if not in preview */}
+        {!isPreview && (
+          <div className="absolute right-4 top-4 flex items-center gap-2 bg-white">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
+              onClick={() => deleteComponent(id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
+              onClick={isEditing ? saveChanges : startEditing}
+            >
+              {isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
+            </Button>
+          </div>
+        )}
 
         <div className="max-w-xl mx-auto text-center mb-12">
-          {isEditing ? (
+          {isEditing && !isPreview ? (
             <div className="space-y-4">
               <Input
                 value={editedContent.title}
@@ -102,7 +110,7 @@ export function ContactForm({ id, initialData  }: ContactFormProps) {
               />
             </div>
 
-            {isEditing ? (
+            {isEditing && !isPreview ? (
               <Input
                 value={editedContent.buttonText}
                 onChange={(e) => setEditedContent({ ...editedContent, buttonText: e.target.value })}

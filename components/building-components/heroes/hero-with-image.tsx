@@ -14,22 +14,29 @@ interface HeroWithImageProps {
     buttonText: string;
     imageUrl?: string;
   };
+  isPreview?: boolean;
 }
 
-export function HeroWithImage({ id, initialData }: HeroWithImageProps) {
-  const { deleteComponent } = useComponents()
+export function HeroWithImage({ id, initialData, isPreview }: HeroWithImageProps) {
+  const { deleteComponent, updateComponentContent, components } = useComponents()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isEditing, setIsEditing] = useState(false)
-  const [content, setContent] = useState({
+
+  // Get current component's content from context
+  const currentComponent = components.find(comp => comp.id === id)
+  const defaultContent = {
     title: initialData?.title || "Build Beautiful Websites Without Code",
     subtitle: initialData?.subtitle || "Transform your ideas into reality without writing a single line of code.",
     buttonText: initialData?.buttonText || "Get Started",
     imageUrl: initialData?.imageUrl || ""
-  });
+  }
+
+  // Use content from context if available, otherwise use default
+  const content = currentComponent?.content || defaultContent
   const [editedContent, setEditedContent] = useState(content)
 
   const handleImageClick = () => {
-    if (!isEditing) return
+    if (!isEditing || isPreview) return
     fileInputRef.current?.click()
   }
 
@@ -42,6 +49,16 @@ export function HeroWithImage({ id, initialData }: HeroWithImageProps) {
       }
       reader.readAsDataURL(file)
     }
+  }
+
+  const saveChanges = () => {
+    updateComponentContent(id, editedContent)
+    setIsEditing(false)
+  }
+
+  const startEditing = () => {
+    setEditedContent(content)
+    setIsEditing(true)
   }
 
   return (
@@ -62,30 +79,32 @@ export function HeroWithImage({ id, initialData }: HeroWithImageProps) {
       />
 
       {/* Control Buttons */}
-      <div className="absolute right-4 top-4 flex items-center gap-2 z-10">
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
-          onClick={() => deleteComponent(id)}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
-          onClick={isEditing ? () => { setContent(editedContent); setIsEditing(false); } : () => { setEditedContent(content); setIsEditing(true); }}
-        >
-          {isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
-        </Button>
-      </div>
+      {!isPreview && (
+        <div className="absolute right-4 top-4 flex items-center gap-2 z-10">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
+            onClick={() => deleteComponent(id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
+            onClick={isEditing ? saveChanges : startEditing}
+          >
+            {isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
+          </Button>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Text Content */}
           <div className="relative z-10 space-y-8">
-            {isEditing ? (
+            {isEditing && !isPreview ? (
               <div className="space-y-6">
                 <Input
                   value={editedContent.title}
@@ -122,12 +141,12 @@ export function HeroWithImage({ id, initialData }: HeroWithImageProps) {
           {/* Image Container */}
           <div className="relative z-10">
             <div 
-              className={`aspect-[5/4] rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 shadow-xl ${isEditing ? 'cursor-pointer' : ''}`}
+              className={`aspect-[5/4] rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 shadow-xl ${isEditing && !isPreview ? 'cursor-pointer' : ''}`}
               onClick={handleImageClick}
             >
-              {(isEditing ? editedContent.imageUrl : content.imageUrl) ? (
+              {(isEditing && !isPreview ? editedContent.imageUrl : content.imageUrl) ? (
                 <Image
-                  src={isEditing ? editedContent.imageUrl : content.imageUrl}
+                  src={isEditing && !isPreview ? editedContent.imageUrl : content.imageUrl}
                   alt="Hero"
                   fill
                   className="object-cover"
@@ -135,7 +154,7 @@ export function HeroWithImage({ id, initialData }: HeroWithImageProps) {
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 gap-3">
                   <Upload className="h-12 w-12" />
-                  {isEditing && <p className="text-sm">Click to upload image</p>}
+                  {isEditing && !isPreview && <p className="text-sm">Click to upload image</p>}
                 </div>
               )}
             </div>
