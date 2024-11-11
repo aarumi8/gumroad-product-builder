@@ -2,6 +2,7 @@
 
 import Sidebar from '@/components/shared/sidebar'
 import MainContent from '@/components/shared/main-content'
+import Header from '@/components/shared/header'
 import { ComponentProvider } from '@/context/component-context'
 import { useState } from 'react'
 
@@ -26,7 +27,8 @@ export default function Home() {
 
   return (
     <ComponentProvider>
-      <main className="flex min-h-screen bg-gray-50">
+      <Header />
+      <main className="flex min-h-screen bg-gray-50 pt-16"> {/* Added pt-16 for header spacing */}
         <Sidebar />
         <MainContent onPreview={() => setIsPreview(true)} />
       </main>

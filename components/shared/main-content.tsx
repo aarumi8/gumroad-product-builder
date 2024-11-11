@@ -55,7 +55,7 @@ export default function MainContent({ isPreview, onPreview }: MainContentProps) 
   
     return (
       <div className="flex-1">
-        <div className={isPreview ? "" : "max-w-[1200px] mx-auto bg-white min-h-[calc(100vh-4rem)] rounded-lg overflow-hidden shadow-sm my-8"}>
+        <div className={isPreview ? "" : "relative max-w-[1200px] mx-auto bg-white min-h-[calc(100vh-4rem)] rounded-lg overflow-hidden shadow-sm my-8"}>
           {/* Components */}
           <div>
             {components.map(component => renderComponent(component))}
@@ -63,10 +63,13 @@ export default function MainContent({ isPreview, onPreview }: MainContentProps) 
   
           {/* Preview Button - Only show in edit mode when there are components */}
           {!isPreview && components.length > 0 && (
-            <div className="fixed bottom-8 right-8">
+            <div className="fixed bottom-8 right-8 z-50">
               <button
                 onClick={onPreview}
-                className="inline-flex items-center justify-center text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md shadow-lg"
+                className="inline-flex items-center justify-center text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md shadow-lg backdrop-blur-sm"
+                style={{
+                  backgroundImage: 'linear-gradient(to right, var(--primary), rgb(147, 51, 234))'
+                }}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

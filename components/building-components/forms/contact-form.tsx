@@ -1,5 +1,4 @@
-// components/forms/ContactForm.tsx
-import { Edit2, Check, Trash2, Mail, User, MessageSquare } from "lucide-react"
+import { Edit2, Check, Trash2, Mail, User, MessageSquare, ArrowRight } from "lucide-react"
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -15,11 +14,12 @@ interface ContactFormProps {
   };
   isPreview?: boolean;
 }
+
 export function ContactForm({ id, initialData, isPreview }: ContactFormProps) {
   const { deleteComponent, updateComponentContent, components } = useComponents()
   const [isEditing, setIsEditing] = useState(false)
+  const [focusedField, setFocusedField] = useState<string | null>(null)
   
-  // Get current component's content from context
   const currentComponent = components.find(comp => comp.id === id)
   const defaultContent = {
     title: initialData?.title || "Get in Touch",
@@ -27,7 +27,6 @@ export function ContactForm({ id, initialData, isPreview }: ContactFormProps) {
     buttonText: initialData?.buttonText || "Send Message"
   }
   
-  // Use content from context if available, otherwise use default
   const content = currentComponent?.content || defaultContent
   const [editedContent, setEditedContent] = useState(content)
 
@@ -41,12 +40,35 @@ export function ContactForm({ id, initialData, isPreview }: ContactFormProps) {
     setIsEditing(true)
   }
 
+  const inputClasses = (fieldName: string) => `
+    w-full bg-white dark:bg-gray-900 border-2 transition-all duration-300
+    ${focusedField === fieldName ? 'border-primary/50 shadow-lg shadow-primary/20' : 'border-gray-200'}
+    rounded-lg pl-10 pr-4 py-3 outline-none
+  `
+
   return (
-    <section className="relative py-16 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-100">
+    <section className="relative py-24 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-100 overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div 
+          className="absolute -top-24 right-0 w-96 h-96 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full mix-blend-multiply blur-3xl"
+          style={{
+            animation: 'moveUpDown 8s ease-in-out infinite'
+          }}
+        />
+        <div 
+          className="absolute -bottom-24 left-0 w-96 h-96 bg-gradient-to-br from-rose-500/10 to-orange-500/10 rounded-full mix-blend-multiply blur-3xl"
+          style={{
+            animation: 'moveUpDown 8s ease-in-out infinite',
+            animationDelay: '-4s'
+          }}
+        />
+      </div>
+
       <div className="max-w-4xl mx-auto">
-        {/* Control Buttons - Only show if not in preview */}
+        {/* Control Buttons */}
         {!isPreview && (
-          <div className="absolute right-4 top-4 flex items-center gap-2 bg-white">
+          <div className="absolute right-4 top-4 flex items-center gap-2">
             <Button
               variant="outline"
               size="icon"
@@ -83,46 +105,105 @@ export function ContactForm({ id, initialData, isPreview }: ContactFormProps) {
               />
             </div>
           ) : (
-            <>
-              <h2 className="text-3xl font-bold text-gray-900">{content.title}</h2>
-              <p className="mt-4 text-lg text-gray-500">{content.subtitle}</p>
-            </>
+            <div 
+              style={{
+                animation: 'fadeIn 0.8s ease-out'
+              }}
+            >
+              <div className="relative inline-block">
+                <h2 className="text-4xl font-bold text-gray-900 mb-4">{content.title}</h2>
+                {/* Animated underline */}
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-1 bg-gradient-to-r from-primary/60 to-purple-500/60 rounded-full"
+                  style={{
+                    animation: 'expandWidth 0.8s ease-out forwards',
+                    animationDelay: '0.4s'
+                  }}
+                />
+              </div>
+              <p className="mt-4 text-lg text-gray-600">{content.subtitle}</p>
+            </div>
           )}
         </div>
 
-        <div className="max-w-lg mx-auto">
-          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-            <div className="relative">
-              <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-              <Input placeholder="Your Name" className="pl-10" />
-            </div>
-            
-            <div className="relative">
-              <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-              <Input type="email" placeholder="Email Address" className="pl-10" />
-            </div>
+        <div className="relative max-w-lg mx-auto">
+          <div 
+            className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-xl"
+            style={{
+              animation: 'fadeIn 0.8s ease-out'
+            }}
+          >
+            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+              <div className="relative group">
+                <User className={`absolute left-3 top-3.5 h-5 w-5 transition-colors duration-300 ${focusedField === 'name' ? 'text-primary' : 'text-gray-400'}`} />
+                <input
+                  placeholder="Your Name"
+                  className={inputClasses('name')}
+                  onFocus={() => setFocusedField('name')}
+                  onBlur={() => setFocusedField(null)}
+                />
+              </div>
+              
+              <div className="relative group">
+                <Mail className={`absolute left-3 top-3.5 h-5 w-5 transition-colors duration-300 ${focusedField === 'email' ? 'text-primary' : 'text-gray-400'}`} />
+                <input
+                  type="email"
+                  placeholder="Email Address"
+                  className={inputClasses('email')}
+                  onFocus={() => setFocusedField('email')}
+                  onBlur={() => setFocusedField(null)}
+                />
+              </div>
 
-            <div className="relative">
-              <MessageSquare className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-              <Textarea 
-                placeholder="Your Message" 
-                className="min-h-[120px] pl-10 pt-2"
-              />
-            </div>
+              <div className="relative group">
+                <MessageSquare className={`absolute left-3 top-3.5 h-5 w-5 transition-colors duration-300 ${focusedField === 'message' ? 'text-primary' : 'text-gray-400'}`} />
+                <textarea 
+                  placeholder="Your Message" 
+                  className={`${inputClasses('message')} min-h-[120px] resize-none`}
+                  onFocus={() => setFocusedField('message')}
+                  onBlur={() => setFocusedField(null)}
+                />
+              </div>
 
-            {isEditing && !isPreview ? (
-              <Input
-                value={editedContent.buttonText}
-                onChange={(e) => setEditedContent({ ...editedContent, buttonText: e.target.value })}
-                className="w-auto"
-                placeholder="Button text..."
-              />
-            ) : (
-              <Button className="w-full">{content.buttonText}</Button>
-            )}
-          </form>
+              {isEditing && !isPreview ? (
+                <Input
+                  value={editedContent.buttonText}
+                  onChange={(e) => setEditedContent({ ...editedContent, buttonText: e.target.value })}
+                  className="w-full"
+                  placeholder="Button text..."
+                />
+              ) : (
+                <Button 
+                  className="w-full group bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 transition-all duration-300"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    {content.buttonText}
+                    <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </Button>
+              )}
+            </form>
+          </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes moveUpDown {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-20px) scale(1.1); }
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes expandWidth {
+          from { width: 0; }
+          to { width: 100px; }
+        }
+      `}</style>
     </section>
   )
 }
+
+export default ContactForm;

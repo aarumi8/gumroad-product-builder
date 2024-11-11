@@ -26,7 +26,7 @@ const sections: Section[] = [
       { 
         id: "ebook", 
         title: "Ebook Template",
-        imageUrl: "/assets/images/temp.jpg" // Add your image paths
+        imageUrl: "/assets/images/temp.jpg"
       },
       { 
         id: "course", 
@@ -119,36 +119,49 @@ export default function Sidebar() {
   }
 
   const SidebarContent = () => (
-    <div className="p-4 space-y-4">
-      {sections.map((section) => (
-        <div key={section.title}>
-          <Button 
-            variant="ghost" 
-            className="w-full justify-between p-2 font-medium"
-            onClick={() => toggleSection(section.title)}
-          >
-            {section.title}
-            {openSections.includes(section.title) ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-          </Button>
-
-          {openSections.includes(section.title) && (
-            <div className="mt-2 space-y-3">
-              {section.items.map((item) => (
-                <TemplateCard
-                  key={item.id}
-                  title={item.title}
-                  imageUrl={item.imageUrl}
-                  onClick={() => handleTemplateClick(item.id)}
-                />
-              ))}
-            </div>
-          )}
+    <div className="h-full flex flex-col">
+      {/* Added Page Components Label */}
+      <div className="p-4 border-b">
+        <div className="relative">
+          <h2 className="text-lg font-semibold bg-gradient-to-r from-primary/80 to-purple-600/80 text-transparent bg-clip-text">
+            Page Components
+          </h2>
+          <div className="absolute -bottom-1 left-0 right-0 h-[2px] bg-gradient-to-r from-primary/60 to-purple-600/60" />
         </div>
-      ))}
+      </div>
+
+      {/* Sections with scroll */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {sections.map((section) => (
+          <div key={section.title}>
+            <Button 
+              variant="ghost" 
+              className="w-full justify-between p-2 font-medium"
+              onClick={() => toggleSection(section.title)}
+            >
+              {section.title}
+              {openSections.includes(section.title) ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </Button>
+
+            {openSections.includes(section.title) && (
+              <div className="mt-2 space-y-3">
+                {section.items.map((item) => (
+                  <TemplateCard
+                    key={item.id}
+                    title={item.title}
+                    imageUrl={item.imageUrl}
+                    onClick={() => handleTemplateClick(item.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   )
 
@@ -162,14 +175,14 @@ export default function Sidebar() {
               <Menu className="h-4 w-4" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+          <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0">
             <SidebarContent />
           </SheetContent>
         </Sheet>
       </div>
 
       {/* Desktop sidebar - now fixed */}
-      <div className="hidden lg:block fixed left-0 top-0 w-[300px] border-r bg-background h-screen overflow-y-auto">
+      <div className="hidden lg:block fixed left-0 top-0 w-[300px] border-r bg-background h-screen">
         <SidebarContent />
       </div>
       {/* Spacer div to offset the fixed sidebar */}

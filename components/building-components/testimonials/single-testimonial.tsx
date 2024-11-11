@@ -19,7 +19,6 @@ export function SingleTestimonial({ id, initialData, isPreview }: SingleTestimon
   const { deleteComponent, updateComponentContent, components } = useComponents()
   const [isEditing, setIsEditing] = useState(false)
 
-  // Get current component's content from context
   const currentComponent = components.find(comp => comp.id === id)
   const defaultTestimonial = {
     text: initialData?.text || "The product exceeded my expectations. The interface is intuitive, and the features are exactly what I needed.",
@@ -27,7 +26,6 @@ export function SingleTestimonial({ id, initialData, isPreview }: SingleTestimon
     role: initialData?.role || "Product Designer"
   }
 
-  // Use content from context if available, otherwise use default
   const testimonial = currentComponent?.content || defaultTestimonial
   const [editedTestimonial, setEditedTestimonial] = useState(testimonial)
 
@@ -42,11 +40,35 @@ export function SingleTestimonial({ id, initialData, isPreview }: SingleTestimon
   }
 
   return (
-    <section className="relative py-16 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-100">
+    <section className="relative py-16 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-100 overflow-hidden">
+      {/* Animated background gradients */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div 
+          className="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-full mix-blend-multiply blur-3xl"
+          style={{
+            animation: 'moveUpDown 8s ease-in-out infinite'
+          }}
+        />
+        <div 
+          className="absolute -bottom-24 -left-24 w-96 h-96 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-full mix-blend-multiply blur-3xl"
+          style={{
+            animation: 'moveUpDown 8s ease-in-out infinite',
+            animationDelay: '-4s'
+          }}
+        />
+        <div 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-rose-500/10 to-orange-500/10 rounded-full mix-blend-multiply blur-3xl"
+          style={{
+            animation: 'moveUpDown 8s ease-in-out infinite',
+            animationDelay: '-2s'
+          }}
+        />
+      </div>
+
       <div className="max-w-4xl mx-auto">
-        {/* Control Buttons */}
+        {/* Control Buttons - No white background */}
         {!isPreview && (
-          <div className="absolute right-4 top-4 flex items-center gap-2 bg-white">
+          <div className="absolute right-4 top-4 flex items-center gap-2">
             <Button
               variant="outline"
               size="icon"
@@ -72,7 +94,13 @@ export function SingleTestimonial({ id, initialData, isPreview }: SingleTestimon
         </div>
 
         <div className="relative max-w-2xl mx-auto">
-          <div className="relative bg-primary/5 rounded-2xl p-8 shadow-sm">
+          {/* Testimonial Bubble - Animated */}
+          <div 
+            className="relative bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 shadow-lg"
+            style={{
+              animation: 'float 6s ease-in-out infinite'
+            }}
+          >
             {/* Quote content */}
             {isEditing && !isPreview ? (
               <Textarea
@@ -82,13 +110,13 @@ export function SingleTestimonial({ id, initialData, isPreview }: SingleTestimon
                 placeholder="Enter testimonial text..."
               />
             ) : (
-              <p className="text-lg text-gray-600 mb-6 italic">"{testimonial.text}"</p>
+              <p className="text-lg text-gray-600 mb-6">{testimonial.text}</p>
             )}
 
             {/* Author info */}
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="h-6 w-6 text-primary" />
+              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center shadow-lg">
+                <User className="h-6 w-6 text-white" />
               </div>
               <div>
                 {isEditing && !isPreview ? (
@@ -114,9 +142,26 @@ export function SingleTestimonial({ id, initialData, isPreview }: SingleTestimon
                 )}
               </div>
             </div>
+
+            {/* Decorative tail for the bubble */}
+            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-gradient-to-br from-white to-gray-50 rotate-45 shadow-lg" />
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes moveUpDown {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-30px) scale(1.1); }
+        }
+      `}</style>
     </section>
   )
 }
+
+export default SingleTestimonial;
