@@ -11,6 +11,7 @@ import { TextAndImage } from '../building-components/images/text-and-image';
 import { GridImagesAndText } from '../building-components/images/grid-images-and-text';
 import { HeroWithImage } from '../building-components/heroes/hero-with-image';
 import { TwoImagesHero } from '../building-components/heroes/two-images-hero';
+import GradientCta from '../building-components/buy-buttons/gradient-cta';
 
 interface MainContentProps {
   isPreview?: boolean;
@@ -48,6 +49,8 @@ export default function MainContent({ isPreview, onPreview }: MainContentProps) 
           return <TextAndImage {...commonProps} />
         case 'image-2':
           return <GridImagesAndText {...commonProps} />
+        case 'buy-button-1':
+          return <GradientCta {...commonProps} />
         default:
           return null
       }

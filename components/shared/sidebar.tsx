@@ -95,6 +95,16 @@ const sections: Section[] = [
       },
     ]
   },
+  {
+    title: "Gumroad Buy Buttons",
+    items: [
+      {
+        id: "buy-button-1",
+        title: "Gradient Call to Action",
+        imageUrl: "/assets/images/gradient-cta.jpg"
+      }
+    ]
+  },
 ]
 
 export default function Sidebar() {

@@ -1,3 +1,4 @@
+// config/templates.ts
 import { Template } from "@/types/template"
 
 export const templates: Record<string, Template> = {
@@ -43,6 +44,16 @@ export const templates: Record<string, Template> = {
             subtitle: "Subscribe to receive free chapter samples and updates",
             buttonText: "Subscribe Now",
             placeholder: "Enter your email"
+          }
+        },
+        // Buy button CTA
+        {
+          type: 'buy-button-1',
+          initialData: {
+            title: "Get Your Copy Today",
+            description: "Join thousands of readers who have already transformed their skills with our comprehensive ebook.",
+            buttonText: "Buy Now - $29",
+            gumroadUrl: "https://dvassallo.gumroad.com/l/small-bets"
           }
         }
       ]
@@ -109,6 +120,16 @@ export const templates: Record<string, Template> = {
             title: "Have Questions?",
             subtitle: "Get in touch with our team for personalized guidance",
             buttonText: "Send Message"
+          }
+        },
+        // Buy button CTA
+        {
+          type: 'buy-button-1',
+          initialData: {
+            title: "Ready to Start Your Learning Journey?",
+            description: "Join our comprehensive course and get lifetime access to expert-led content, practical assignments, and a supportive community.",
+            buttonText: "Enroll Now - $199",
+            gumroadUrl: "https://dvassallo.gumroad.com/l/small-bets"
           }
         }
       ]
