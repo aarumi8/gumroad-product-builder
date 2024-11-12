@@ -1,163 +1,171 @@
-// components/building-components/buy-buttons/gradient-cta.tsx
-import { Edit2, Check, Trash2, ExternalLink } from "lucide-react"
-import { useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { useComponents } from "@/context/component-context"
+import React from 'react'
+import { useComponentEditor } from '@/hooks/useComponentEditor'
+import { EditorControls } from '@/components/building-blocks/editor-controls'
+import { BackgroundGradients } from '@/components/building-blocks/background-gradients'
+import { SectionWrapper } from '@/components/building-blocks/section-wrapper'
+import { EditableContent } from '@/components/building-blocks/editable-content'
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-  } from "@/components/ui/dialog"
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
+
+interface GumroadContent {
+  title: string
+  description: string
+  buttonText: string
+  gumroadUrl: string
+}
 
 interface GradientCtaProps {
-  id: string;
-  initialData?: {
-    title: string;
-    description: string;
-    buttonText: string;
-    gumroadUrl: string;
-  };
-  isPreview?: boolean;
+  id: string
+  initialData?: GumroadContent
+  isPreview?: boolean
 }
 
 export function GradientCta({ id, initialData, isPreview }: GradientCtaProps) {
-  const { deleteComponent, updateComponentContent, components } = useComponents()
-  const [isEditing, setIsEditing] = useState(false)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isModalOpen, setIsModalOpen] = React.useState(false)
 
-  const currentComponent = components.find(comp => comp.id === id)
-  const defaultContent = {
-    title: initialData?.title || "Ready to Transform Your Journey?",
-    description: initialData?.description || "Join thousands of creators who have already taken the leap. Start building your dream business today.",
-    buttonText: initialData?.buttonText || "Buy →",
-    gumroadUrl: initialData?.gumroadUrl || "https://dvassallo.gumroad.com/l/small-bets"
+  const defaultContent: GumroadContent = {
+    title: "Ready to Transform Your Journey?",
+    description: "Join thousands of creators who have already taken the leap. Start building your dream business today.",
+    buttonText: "Buy →",
+    gumroadUrl: "https://dvassallo.gumroad.com/l/small-bets"
   }
 
-  const content = currentComponent?.content || defaultContent
-  const [editedContent, setEditedContent] = useState(content)
+  const {
+    content,
+    editedContent,
+    isEditing,
+    setEditedContent,
+    saveChanges,
+    startEditing,
+    deleteComponent
+  } = useComponentEditor<GumroadContent>({
+    id,
+    defaultContent,
+    initialData
+  })
 
-  const saveChanges = () => {
-    updateComponentContent(id, editedContent)
-    setIsEditing(false)
+  const handleAIContent = (aiContent: any) => {
+    console.log('Raw AI content received:', aiContent)
+    
+    if (!aiContent || typeof aiContent !== 'object') {
+      console.error('Invalid AI content received:', aiContent)
+      return
+    }
+
+    // Start editing mode first
+    startEditing()
+
+    // Format the content with fallbacks
+    const formattedContent: GumroadContent = {
+      title: aiContent.title || defaultContent.title,
+      description: aiContent.description || defaultContent.description,
+      buttonText: aiContent.buttonText || defaultContent.buttonText,
+      gumroadUrl: aiContent.gumroadUrl || defaultContent.gumroadUrl
+    }
+
+    console.log('Formatted content:', formattedContent)
+    setEditedContent({...formattedContent})
   }
 
-  const startEditing = () => {
-    setEditedContent(content)
-    setIsEditing(true)
+  const handleContentChange = (key: keyof GumroadContent, value: string) => {
+    setEditedContent(prev => ({ ...prev, [key]: value }))
   }
+
+  // URL Input Field - only shown in edit mode
+  const UrlInput = () => {
+    if (!isEditing || isPreview) return null
+
+    return (
+      <div className="mt-4">
+        <Input
+          value={editedContent.gumroadUrl}
+          onChange={(e) => handleContentChange('gumroadUrl', e.target.value)}
+          placeholder="Gumroad product URL..."
+          className="text-center"
+        />
+      </div>
+    )
+  }
+
+  // Gumroad Modal
+  const GumroadModal = () => (
+    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <DialogContent className="max-w-4xl p-0 h-[90vh]">
+        <DialogHeader className="px-6 py-4 border-b">
+          <DialogTitle>Purchase Product</DialogTitle>
+        </DialogHeader>
+        <div className="w-full h-[calc(90vh-57px)]">
+          <iframe 
+            src={content.gumroadUrl}
+            className="w-full h-full"
+            frameBorder="0"
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
 
   return (
-    <section className="relative py-16 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-100 overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <SectionWrapper className="py-16">
+      <BackgroundGradients>
+        {/* Additional animated background elements */}
         <div 
-          className="absolute -top-24 right-0 w-96 h-96 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full mix-blend-multiply blur-3xl"
+          className="absolute inset-0 overflow-hidden"
           style={{
-            animation: 'moveUpDown 8s ease-in-out infinite'
+            animation: 'pulse 3s ease-in-out infinite'
           }}
-        />
-        <div 
-          className="absolute -bottom-24 left-0 w-96 h-96 bg-gradient-to-br from-rose-500/10 to-orange-500/10 rounded-full mix-blend-multiply blur-3xl"
-          style={{
-            animation: 'moveUpDown 8s ease-in-out infinite',
-            animationDelay: '-4s'
-          }}
-        />
-      </div>
-
-      {/* Control Buttons */}
-      {!isPreview && (
-        <div className="absolute right-4 top-4 flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
-            onClick={() => deleteComponent(id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
-            onClick={isEditing ? saveChanges : startEditing}
-          >
-            {isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
-          </Button>
+        >
+          <div className="absolute -top-24 right-0 w-96 h-96 bg-gradient-to-br from-primary/20 to-purple-600/20 rounded-full mix-blend-multiply blur-3xl transform rotate-12" />
+          <div className="absolute -bottom-24 left-0 w-96 h-96 bg-gradient-to-br from-blue-500/20 to-primary/20 rounded-full mix-blend-multiply blur-3xl transform -rotate-12" />
         </div>
-      )}
+      </BackgroundGradients>
+
+      <EditorControls
+        isPreview={isPreview}
+        isEditing={isEditing}
+        onDelete={() => deleteComponent(id)}
+        onEdit={startEditing}
+        onSave={saveChanges}
+        componentType="buy-button-1"
+        onAIContent={handleAIContent}
+      />
 
       <div className="max-w-3xl mx-auto text-center">
-        {isEditing && !isPreview ? (
-          <div className="space-y-4">
-            <Input
-              value={editedContent.title}
-              onChange={(e) => setEditedContent({ ...editedContent, title: e.target.value })}
-              className="text-center text-2xl font-bold"
-              placeholder="Enter title..."
-            />
-            <Textarea
-              value={editedContent.description}
-              onChange={(e) => setEditedContent({ ...editedContent, description: e.target.value })}
-              className="text-center"
-              placeholder="Enter description..."
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                value={editedContent.buttonText}
-                onChange={(e) => setEditedContent({ ...editedContent, buttonText: e.target.value })}
-                placeholder="Button text..."
-              />
-              <Input
-                value={editedContent.gumroadUrl}
-                onChange={(e) => setEditedContent({ ...editedContent, gumroadUrl: e.target.value })}
-                placeholder="Gumroad URL..."
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">{content.title}</h2>
-            <p className="text-lg text-gray-600">{content.description}</p>
-            <Button 
-              size="lg"
-              className="text-lg group relative px-8 py-6 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 transition-all duration-300"
-              onClick={() => setIsModalOpen(true)}
-            >
-              {content.buttonText}
-              <span className="absolute inset-0 rounded-md bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </Button>
-          </div>
-        )}
+        <EditableContent
+          isEditing={isEditing}
+          isPreview={isPreview}
+          content={isEditing ? editedContent : content}
+          onContentChange={handleContentChange}
+          buttonProps={{
+            className: cn(
+              "text-lg group relative px-8 py-6",
+              "bg-gradient-to-r from-primary to-purple-600",
+              "hover:from-primary/90 hover:to-purple-600/90",
+              "transition-all duration-300"
+            ),
+            onClick: () => !isEditing && setIsModalOpen(true)
+          }}
+        />
+        
+        <UrlInput />
       </div>
 
-      {/* Updated Gumroad Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-4xl p-0 h-[90vh]"> {/* Removed default padding and increased height */}
-          <DialogHeader className="px-6 py-4 border-b"> {/* Added padding to header specifically */}
-            <DialogTitle>Purchase Product</DialogTitle>
-          </DialogHeader>
-          <div className="w-full h-[calc(90vh-57px)]"> {/* Calculate height by subtracting header height */}
-            <iframe 
-              src={content.gumroadUrl}
-              className="w-full h-full"
-              frameBorder="0"
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+      <GumroadModal />
 
       <style jsx>{`
-        @keyframes moveUpDown {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-20px) scale(1.1); }
+        @keyframes pulse {
+          0%, 100% { opacity: 0.8; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.05); }
         }
       `}</style>
-    </section>
+    </SectionWrapper>
   )
 }
 
-export default GradientCta;
+export default GradientCta

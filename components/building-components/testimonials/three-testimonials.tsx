@@ -1,156 +1,202 @@
-import { Edit2, Check, Trash2, User } from "lucide-react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
-import { useComponents } from "@/context/component-context"
+import React from 'react'
+import { User } from 'lucide-react'
+import { useComponentEditor } from '@/hooks/useComponentEditor'
+import { EditorControls } from '@/components/building-blocks/editor-controls'
+import { BackgroundGradients } from '@/components/building-blocks/background-gradients'
+import { SectionWrapper } from '@/components/building-blocks/section-wrapper'
+import { EditableContent } from '@/components/building-blocks/editable-content'
+import { cn } from '@/lib/utils'
 
 interface Testimonial {
-  text: string;
-  author: string;
+  text: string
+  author: string
+}
+
+interface TestimonialsContent {
+  testimonials: Testimonial[]
 }
 
 interface ThreeTestimonialsProps {
-  id: string;
-  initialData?: {
-    testimonials: Testimonial[];
-  };
-  isPreview?: boolean;
+  id: string
+  initialData?: TestimonialsContent
+  isPreview?: boolean
 }
 
 export function ThreeTestimonials({ id, initialData, isPreview }: ThreeTestimonialsProps) {
-  const { deleteComponent, updateComponentContent, components } = useComponents()
-  const [isEditing, setIsEditing] = useState(false)
+  const defaultContent: TestimonialsContent = {
+    testimonials: [
+      {
+        text: "This product has completely transformed how we work. The efficiency gains are remarkable.",
+        author: "Alex Chen"
+      },
+      {
+        text: "Outstanding support team and regular updates. They really listen to user feedback.",
+        author: "Maria Garcia"
+      },
+      {
+        text: "Intuitive interface and powerful features. Exactly what our team needed.",
+        author: "James Wilson"
+      }
+    ]
+  }
 
-  const currentComponent = components.find(comp => comp.id === id)
-  const defaultTestimonials = [
-    {
-      text: "This product has completely transformed how we work. The efficiency gains are remarkable.",
-      author: "Alex Chen"
-    },
-    {
-      text: "Outstanding support team and regular updates. They really listen to user feedback.",
-      author: "Maria Garcia"
-    },
-    {
-      text: "Intuitive interface and powerful features. Exactly what our team needed.",
-      author: "James Wilson"
+  const {
+    content,
+    editedContent,
+    isEditing,
+    setEditedContent,
+    saveChanges,
+    startEditing,
+    deleteComponent
+  } = useComponentEditor<TestimonialsContent>({
+    id,
+    defaultContent,
+    initialData
+  })
+
+  const handleAIContent = (aiContent: any) => {
+    console.log('Raw AI content received:', aiContent)
+    
+    if (!aiContent?.testimonials || !Array.isArray(aiContent.testimonials)) {
+      console.error('Invalid AI content received:', aiContent)
+      return
     }
-  ]
 
-  const testimonials = currentComponent?.content?.testimonials || initialData?.testimonials || defaultTestimonials
-  const [editedTestimonials, setEditedTestimonials] = useState(testimonials)
+    // Start editing mode
+    startEditing()
 
-  const handleEdit = (index: number, field: keyof Testimonial, value: string) => {
-    const newTestimonials = [...editedTestimonials]
-    newTestimonials[index] = { ...newTestimonials[index], [field]: value }
-    setEditedTestimonials(newTestimonials)
+    // Format the content with fallbacks
+    const formattedContent: TestimonialsContent = {
+      testimonials: aiContent.testimonials.map((t: any, index: number) => ({
+        text: t.text || defaultContent.testimonials[index].text,
+        author: t.author || defaultContent.testimonials[index].author
+      }))
+    }
+
+    console.log('Formatted content:', formattedContent)
+    setEditedContent({...formattedContent})
   }
 
-  const saveChanges = () => {
-    updateComponentContent(id, { testimonials: editedTestimonials })
-    setIsEditing(false)
+  const handleTestimonialChange = (index: number, field: keyof Testimonial, value: string) => {
+    const newTestimonials = [...editedContent.testimonials]
+    newTestimonials[index] = { 
+      ...newTestimonials[index], 
+      [field]: value 
+    }
+    setEditedContent({ testimonials: newTestimonials })
   }
 
-  const startEditing = () => {
-    setEditedTestimonials(testimonials)
-    setIsEditing(true)
+  // Section Title Component
+  const SectionTitle = () => (
+    <div className="text-center mb-12">
+      <h2 className="text-3xl font-bold text-gray-900">Customer Reviews</h2>
+      <p className="mt-4 text-lg text-gray-500">What our clients have to say</p>
+    </div>
+  )
+
+  // Individual Testimonial Card Component
+  const TestimonialCard = ({ testimonial, index }: { testimonial: Testimonial; index: number }) => {
+    const isEditMode = isEditing && !isPreview
+    const currentTestimonial = isEditMode ? editedContent.testimonials[index] : testimonial
+
+    return (
+      <div 
+        className="relative"
+        style={{
+          animation: 'float 6s ease-in-out infinite',
+          animationDelay: `${-index * 2}s`
+        }}
+      >
+        <div className="relative bg-gradient-to-br from-white to-gray-50 rounded-2xl p-6 shadow-lg h-full">
+          {/* Testimonial Content */}
+          <EditableContent
+            isEditing={isEditing}
+            isPreview={isPreview}
+            content={{
+              description: currentTestimonial.text,
+            }}
+            onContentChange={(_, value) => handleTestimonialChange(index, 'text', value)}
+            className="mb-4"
+          />
+
+          {/* Author Info */}
+          <AuthorInfo author={currentTestimonial.author} index={index} />
+
+          <BubbleTail />
+        </div>
+      </div>
+    )
   }
+
+  // Author Info Component
+  const AuthorInfo = ({ author, index }: { author: string; index: number }) => (
+    <div className="flex items-center gap-3">
+      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center shadow-lg">
+        <User className="h-5 w-5 text-white" />
+      </div>
+      <EditableContent
+        isEditing={isEditing}
+        isPreview={isPreview}
+        content={{ title: author }}
+        onContentChange={(_, value) => handleTestimonialChange(index, 'author', value)}
+        className="font-medium text-gray-900"
+      />
+    </div>
+  )
+
+  // Bubble Tail Component
+  const BubbleTail = () => (
+    <div 
+      className={cn(
+        "absolute -bottom-3 left-1/2 -translate-x-1/2",
+        "w-6 h-6 bg-gradient-to-br from-white to-gray-50",
+        "rotate-45 shadow-lg"
+      )} 
+    />
+  )
 
   return (
-    <section className="relative py-16 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-100 overflow-hidden">
-      {/* Animated background gradients */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <SectionWrapper className="py-16">
+      {/* Complex gradient background with multiple layers */}
+      <BackgroundGradients colors={{
+        first: 'from-violet-500/20 to-purple-500/20',
+        second: 'from-blue-500/20 to-cyan-500/20'
+      }}>
         <div 
-          className="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-full mix-blend-multiply blur-3xl"
-          style={{
-            animation: 'moveUpDown 8s ease-in-out infinite'
-          }}
-        />
-        <div 
-          className="absolute -bottom-24 -left-24 w-96 h-96 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-full mix-blend-multiply blur-3xl"
-          style={{
-            animation: 'moveUpDown 8s ease-in-out infinite',
-            animationDelay: '-4s'
-          }}
-        />
-        <div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-rose-500/10 to-orange-500/10 rounded-full mix-blend-multiply blur-3xl"
+          className={cn(
+            "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+            "w-96 h-96 bg-gradient-to-br from-rose-500/10 to-orange-500/10",
+            "rounded-full mix-blend-multiply blur-3xl"
+          )}
           style={{
             animation: 'moveUpDown 8s ease-in-out infinite',
             animationDelay: '-2s'
           }}
         />
-      </div>
+      </BackgroundGradients>
+
+      <EditorControls
+        isPreview={isPreview}
+        isEditing={isEditing}
+        onDelete={() => deleteComponent(id)}
+        onEdit={startEditing}
+        onSave={saveChanges}
+        componentType="testimonial-2"
+        onAIContent={handleAIContent}
+      />
 
       <div className="max-w-4xl mx-auto">
-        {/* Control Buttons */}
-        {!isPreview && (
-          <div className="absolute right-4 top-4 flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
-              onClick={() => deleteComponent(id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
-              onClick={isEditing ? saveChanges : startEditing}
-            >
-              {isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
-            </Button>
-          </div>
-        )}
+        <SectionTitle />
 
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900">Customer Reviews</h2>
-          <p className="mt-4 text-lg text-gray-500">What our clients have to say</p>
-        </div>
-
+        {/* Testimonials Grid */}
         <div className="grid md:grid-cols-3 gap-6">
-          {(isEditing ? editedTestimonials : testimonials).map((testimonial, index) => (
-            <div 
-              key={index}
-              className="relative"
-              style={{
-                animation: 'float 6s ease-in-out infinite',
-                animationDelay: `${-index * 2}s`
-              }}
-            >
-              <div className="relative bg-gradient-to-br from-white to-gray-50 rounded-2xl p-6 shadow-lg h-full">
-                {isEditing && !isPreview ? (
-                  <div className="space-y-4">
-                    <Textarea
-                      value={testimonial.text}
-                      onChange={(e) => handleEdit(index, 'text', e.target.value)}
-                      className="min-h-[100px]"
-                      placeholder="Enter testimonial text..."
-                    />
-                    <Input
-                      value={testimonial.author}
-                      onChange={(e) => handleEdit(index, 'author', e.target.value)}
-                      placeholder="Author name"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <p className="text-gray-600 mb-4">{testimonial.text}</p>
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center shadow-lg">
-                        <User className="h-5 w-5 text-white" />
-                      </div>
-                      <p className="font-medium text-gray-900">— {testimonial.author}</p>
-                    </div>
-                  </>
-                )}
-                {/* Decorative tail */}
-                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-gradient-to-br from-white to-gray-50 rotate-45 shadow-lg" />
-              </div>
-            </div>
+          {(isEditing ? editedContent.testimonials : content.testimonials)
+            .map((testimonial, index) => (
+              <TestimonialCard
+                key={index}
+                testimonial={testimonial}
+                index={index}
+              />
           ))}
         </div>
       </div>
@@ -160,14 +206,9 @@ export function ThreeTestimonials({ id, initialData, isPreview }: ThreeTestimoni
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-20px); }
         }
-        
-        @keyframes moveUpDown {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-30px) scale(1.1); }
-        }
       `}</style>
-    </section>
+    </SectionWrapper>
   )
 }
 
-export default ThreeTestimonials;
+export default ThreeTestimonials

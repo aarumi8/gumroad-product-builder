@@ -1,130 +1,231 @@
-import { Edit2, Check, Trash2, Mail, User, MessageSquare, ArrowRight } from "lucide-react"
-import { useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { useComponents } from "@/context/component-context"
+import React, { useState } from 'react'
+import { Mail, User, MessageSquare, ArrowRight } from 'lucide-react'
+import { useComponentEditor } from '@/hooks/useComponentEditor'
+import { EditorControls } from '@/components/building-blocks/editor-controls'
+import { BackgroundGradients } from '@/components/building-blocks/background-gradients'
+import { SectionWrapper } from '@/components/building-blocks/section-wrapper'
+import { EditableContent } from '@/components/building-blocks/editable-content'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+
+interface FormContent {
+  title: string
+  subtitle: string
+  buttonText: string
+  namePlaceholder: string
+  emailPlaceholder: string
+  messagePlaceholder: string
+}
 
 interface ContactFormProps {
-  id: string;
-  initialData?: {
-    title: string;
-    subtitle: string;
-    buttonText: string;
-  };
-  isPreview?: boolean;
+  id: string
+  initialData?: FormContent
+  isPreview?: boolean
 }
 
 export function ContactForm({ id, initialData, isPreview }: ContactFormProps) {
-  const { deleteComponent, updateComponentContent, components } = useComponents()
-  const [isEditing, setIsEditing] = useState(false)
   const [focusedField, setFocusedField] = useState<string | null>(null)
   
-  const currentComponent = components.find(comp => comp.id === id)
-  const defaultContent = {
-    title: initialData?.title || "Get in Touch",
-    subtitle: initialData?.subtitle || "Have any questions? We'd love to hear from you.",
-    buttonText: initialData?.buttonText || "Send Message"
-  }
-  
-  const content = currentComponent?.content || defaultContent
-  const [editedContent, setEditedContent] = useState(content)
-
-  const saveChanges = () => {
-    updateComponentContent(id, editedContent)
-    setIsEditing(false)
+  const defaultContent: FormContent = {
+    title: "Get in Touch",
+    subtitle: "Have any questions? We'd love to hear from you.",
+    buttonText: "Send Message",
+    namePlaceholder: "Your Name",
+    emailPlaceholder: "Email Address",
+    messagePlaceholder: "Your Message"
   }
 
-  const startEditing = () => {
-    setEditedContent(content)
-    setIsEditing(true)
+  const {
+    content,
+    editedContent,
+    isEditing,
+    setEditedContent,
+    saveChanges,
+    startEditing,
+    deleteComponent
+  } = useComponentEditor<FormContent>({
+    id,
+    defaultContent,
+    initialData
+  })
+
+  const handleAIContent = (aiContent: any) => {
+    console.log('Raw AI content received:', aiContent)
+    
+    if (!aiContent || typeof aiContent !== 'object') {
+      console.error('Invalid AI content received:', aiContent)
+      return
+    }
+
+    // First, start editing mode
+    startEditing()
+
+    // Format the content with fallbacks
+    const formattedContent: FormContent = {
+      title: aiContent.title || defaultContent.title,
+      subtitle: aiContent.subtitle || aiContent.description || defaultContent.subtitle,
+      buttonText: aiContent.buttonText || defaultContent.buttonText,
+      namePlaceholder: aiContent.namePlaceholder || defaultContent.namePlaceholder,
+      emailPlaceholder: aiContent.emailPlaceholder || defaultContent.emailPlaceholder,
+      messagePlaceholder: aiContent.messagePlaceholder || defaultContent.messagePlaceholder
+    }
+
+    console.log('Formatted content:', formattedContent)
+    setEditedContent({...formattedContent})
   }
 
-  const inputClasses = (fieldName: string) => `
-    w-full bg-white dark:bg-gray-900 border-2 transition-all duration-300
-    ${focusedField === fieldName ? 'border-primary/50 shadow-lg shadow-primary/20' : 'border-gray-200'}
-    rounded-lg pl-10 pr-4 py-3 outline-none
-  `
+  const handleContentChange = (key: keyof FormContent, value: string) => {
+    setEditedContent(prev => ({ ...prev, [key]: value }))
+  }
 
-  return (
-    <section className="relative py-24 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-100 overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div 
-          className="absolute -top-24 right-0 w-96 h-96 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full mix-blend-multiply blur-3xl"
-          style={{
-            animation: 'moveUpDown 8s ease-in-out infinite'
-          }}
+  // Input field configuration
+  const getInputFields = () => {
+    const currentContent = isEditing ? editedContent : content
+    
+    return [
+      {
+        name: 'name',
+        placeholder: currentContent.namePlaceholder,
+        icon: User,
+        type: 'text',
+        editKey: 'namePlaceholder'
+      },
+      {
+        name: 'email',
+        placeholder: currentContent.emailPlaceholder,
+        icon: Mail,
+        type: 'email',
+        editKey: 'emailPlaceholder'
+      },
+      {
+        name: 'message',
+        placeholder: currentContent.messagePlaceholder,
+        icon: MessageSquare,
+        type: 'textarea',
+        editKey: 'messagePlaceholder'
+      }
+    ]
+  }
+
+  const InputField = ({ 
+    name, 
+    placeholder, 
+    icon: Icon, 
+    type,
+    editKey 
+  }: { 
+    name: string
+    placeholder: string
+    icon: React.ElementType
+    type: string
+    editKey: keyof FormContent
+  }) => {
+    const isFocused = focusedField === name
+    const isTextarea = type === 'textarea'
+    
+    if (isEditing && !isPreview) {
+      return (
+        <div className="relative group">
+          <Icon 
+            className={cn(
+              "absolute left-3 top-3.5 h-5 w-5",
+              isFocused ? 'text-primary' : 'text-gray-400'
+            )} 
+          />
+          <input
+            type="text"
+            value={editedContent[editKey]}
+            onChange={(e) => handleContentChange(editKey, e.target.value)}
+            className={cn(
+              "w-full bg-white dark:bg-gray-900 border-2 transition-all duration-300",
+              "rounded-lg pl-10 pr-4 py-3 outline-none",
+              isFocused ? 'border-primary/50 shadow-lg shadow-primary/20' : 'border-gray-200'
+            )}
+            placeholder={`Enter ${name} placeholder text...`}
+            onFocus={() => setFocusedField(name)}
+            onBlur={() => setFocusedField(null)}
+          />
+        </div>
+      )
+    }
+
+    return isTextarea ? (
+      <div className="relative group">
+        <Icon 
+          className={cn(
+            "absolute left-3 top-3.5 h-5 w-5 transition-colors duration-300",
+            isFocused ? 'text-primary' : 'text-gray-400'
+          )} 
         />
-        <div 
-          className="absolute -bottom-24 left-0 w-96 h-96 bg-gradient-to-br from-rose-500/10 to-orange-500/10 rounded-full mix-blend-multiply blur-3xl"
-          style={{
-            animation: 'moveUpDown 8s ease-in-out infinite',
-            animationDelay: '-4s'
-          }}
+        <textarea
+          placeholder={placeholder}
+          className={cn(
+            "w-full bg-white dark:bg-gray-900 border-2 transition-all duration-300",
+            "rounded-lg pl-10 pr-4 py-3 outline-none min-h-[120px] resize-none",
+            isFocused && 'border-primary/50 shadow-lg shadow-primary/20',
+            !isFocused && 'border-gray-200'
+          )}
+          onFocus={() => setFocusedField(name)}
+          onBlur={() => setFocusedField(null)}
         />
       </div>
+    ) : (
+      <div className="relative group">
+        <Icon 
+          className={cn(
+            "absolute left-3 top-3.5 h-5 w-5 transition-colors duration-300",
+            isFocused ? 'text-primary' : 'text-gray-400'
+          )} 
+        />
+        <input
+          type={type}
+          placeholder={placeholder}
+          className={cn(
+            "w-full bg-white dark:bg-gray-900 border-2 transition-all duration-300",
+            "rounded-lg pl-10 pr-4 py-3 outline-none",
+            isFocused && 'border-primary/50 shadow-lg shadow-primary/20',
+            !isFocused && 'border-gray-200'
+          )}
+          onFocus={() => setFocusedField(name)}
+          onBlur={() => setFocusedField(null)}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <SectionWrapper>
+      <BackgroundGradients colors={{
+        first: 'from-blue-500/10 to-purple-500/10',
+        second: 'from-rose-500/10 to-orange-500/10'
+      }} />
+
+      <EditorControls
+        isPreview={isPreview}
+        isEditing={isEditing}
+        onDelete={() => deleteComponent(id)}
+        onEdit={startEditing}
+        onSave={saveChanges}
+        componentType="contact-form"
+        onAIContent={handleAIContent}
+      />
 
       <div className="max-w-4xl mx-auto">
-        {/* Control Buttons */}
-        {!isPreview && (
-          <div className="absolute right-4 top-4 flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
-              onClick={() => deleteComponent(id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
-              onClick={isEditing ? saveChanges : startEditing}
-            >
-              {isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
-            </Button>
-          </div>
-        )}
-
+        {/* Title Section */}
         <div className="max-w-xl mx-auto text-center mb-12">
-          {isEditing && !isPreview ? (
-            <div className="space-y-4">
-              <Input
-                value={editedContent.title}
-                onChange={(e) => setEditedContent({ ...editedContent, title: e.target.value })}
-                className="text-center text-xl font-bold"
-                placeholder="Enter title..."
-              />
-              <Input
-                value={editedContent.subtitle}
-                onChange={(e) => setEditedContent({ ...editedContent, subtitle: e.target.value })}
-                className="text-center"
-                placeholder="Enter subtitle..."
-              />
-            </div>
-          ) : (
-            <div 
-              style={{
-                animation: 'fadeIn 0.8s ease-out'
-              }}
-            >
-              <div className="relative inline-block">
-                <h2 className="text-4xl font-bold text-gray-900 mb-4">{content.title}</h2>
-                {/* Animated underline */}
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-1 bg-gradient-to-r from-primary/60 to-purple-500/60 rounded-full"
-                  style={{
-                    animation: 'expandWidth 0.8s ease-out forwards',
-                    animationDelay: '0.4s'
-                  }}
-                />
-              </div>
-              <p className="mt-4 text-lg text-gray-600">{content.subtitle}</p>
-            </div>
-          )}
+          <EditableContent
+            isEditing={isEditing}
+            isPreview={isPreview}
+            content={{
+              title: isEditing ? editedContent.title : content.title,
+              subtitle: isEditing ? editedContent.subtitle : content.subtitle,
+              buttonText: isEditing ? editedContent.buttonText : content.buttonText
+            }}
+            onContentChange={handleContentChange}
+          />
         </div>
 
+        {/* Form Section */}
         <div className="relative max-w-lg mx-auto">
           <div 
             className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-xl"
@@ -133,43 +234,22 @@ export function ContactForm({ id, initialData, isPreview }: ContactFormProps) {
             }}
           >
             <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-              <div className="relative group">
-                <User className={`absolute left-3 top-3.5 h-5 w-5 transition-colors duration-300 ${focusedField === 'name' ? 'text-primary' : 'text-gray-400'}`} />
-                <input
-                  placeholder="Your Name"
-                  className={inputClasses('name')}
-                  onFocus={() => setFocusedField('name')}
-                  onBlur={() => setFocusedField(null)}
+              {/* Render input fields */}
+              {getInputFields().map((field) => (
+                <InputField 
+                  key={field.name} 
+                  {...field} 
                 />
-              </div>
-              
-              <div className="relative group">
-                <Mail className={`absolute left-3 top-3.5 h-5 w-5 transition-colors duration-300 ${focusedField === 'email' ? 'text-primary' : 'text-gray-400'}`} />
-                <input
-                  type="email"
-                  placeholder="Email Address"
-                  className={inputClasses('email')}
-                  onFocus={() => setFocusedField('email')}
-                  onBlur={() => setFocusedField(null)}
-                />
-              </div>
+              ))}
 
-              <div className="relative group">
-                <MessageSquare className={`absolute left-3 top-3.5 h-5 w-5 transition-colors duration-300 ${focusedField === 'message' ? 'text-primary' : 'text-gray-400'}`} />
-                <textarea 
-                  placeholder="Your Message" 
-                  className={`${inputClasses('message')} min-h-[120px] resize-none`}
-                  onFocus={() => setFocusedField('message')}
-                  onBlur={() => setFocusedField(null)}
-                />
-              </div>
-
+              {/* Submit Button */}
               {isEditing && !isPreview ? (
-                <Input
+                <input
+                  type="text"
                   value={editedContent.buttonText}
-                  onChange={(e) => setEditedContent({ ...editedContent, buttonText: e.target.value })}
-                  className="w-full"
-                  placeholder="Button text..."
+                  onChange={(e) => handleContentChange('buttonText', e.target.value)}
+                  className="w-full p-3 border-2 rounded-lg"
+                  placeholder="Enter button text..."
                 />
               ) : (
                 <Button 
@@ -185,25 +265,8 @@ export function ContactForm({ id, initialData, isPreview }: ContactFormProps) {
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes moveUpDown {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-20px) scale(1.1); }
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes expandWidth {
-          from { width: 0; }
-          to { width: 100px; }
-        }
-      `}</style>
-    </section>
+    </SectionWrapper>
   )
 }
 
-export default ContactForm;
+export default ContactForm

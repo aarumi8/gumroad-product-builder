@@ -1,61 +1,169 @@
-import { Edit2, Check, Trash2, User } from "lucide-react"
-import { useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { useComponents } from "@/context/component-context"
+import React from 'react'
+import { User } from 'lucide-react'
+import { useComponentEditor } from '@/hooks/useComponentEditor'
+import { EditorControls } from '@/components/building-blocks/editor-controls'
+import { BackgroundGradients } from '@/components/building-blocks/background-gradients'
+import { SectionWrapper } from '@/components/building-blocks/section-wrapper'
+import { EditableContent } from '@/components/building-blocks/editable-content'
+import { cn } from '@/lib/utils'
+
+interface TestimonialContent {
+  text: string
+  author: string
+  role: string
+}
 
 interface SingleTestimonialProps {
-  id: string;
-  initialData?: {
-    text: string;
-    author: string;
-    role: string;
-  };
-  isPreview?: boolean;
+  id: string
+  initialData?: TestimonialContent
+  isPreview?: boolean
 }
 
 export function SingleTestimonial({ id, initialData, isPreview }: SingleTestimonialProps) {
-  const { deleteComponent, updateComponentContent, components } = useComponents()
-  const [isEditing, setIsEditing] = useState(false)
-
-  const currentComponent = components.find(comp => comp.id === id)
-  const defaultTestimonial = {
-    text: initialData?.text || "The product exceeded my expectations. The interface is intuitive, and the features are exactly what I needed.",
-    author: initialData?.author || "Sarah Johnson",
-    role: initialData?.role || "Product Designer"
+  const defaultContent: TestimonialContent = {
+    text: "The product exceeded my expectations. The interface is intuitive, and the features are exactly what I needed.",
+    author: "Sarah Johnson",
+    role: "Product Designer"
   }
 
-  const testimonial = currentComponent?.content || defaultTestimonial
-  const [editedTestimonial, setEditedTestimonial] = useState(testimonial)
+  const {
+    content,
+    editedContent,
+    isEditing,
+    setEditedContent,
+    saveChanges,
+    startEditing,
+    deleteComponent
+  } = useComponentEditor<TestimonialContent>({
+    id,
+    defaultContent,
+    initialData
+  })
 
-  const saveChanges = () => {
-    updateComponentContent(id, editedTestimonial)
-    setIsEditing(false)
+  const handleAIContent = (aiContent: any) => {
+    console.log('Raw AI content received:', aiContent)
+    
+    if (!aiContent || typeof aiContent !== 'object') {
+      console.error('Invalid AI content received:', aiContent)
+      return
+    }
+
+    // Start editing mode
+    startEditing()
+
+    // Format the content with fallbacks
+    const formattedContent: TestimonialContent = {
+      text: aiContent.text || defaultContent.text,
+      author: aiContent.author || defaultContent.author,
+      role: aiContent.role || defaultContent.role
+    }
+
+    console.log('Formatted content:', formattedContent)
+    setEditedContent({...formattedContent})
   }
 
-  const startEditing = () => {
-    setEditedTestimonial(testimonial)
-    setIsEditing(true)
+  const handleContentChange = (key: keyof TestimonialContent, value: string) => {
+    setEditedContent(prev => ({ ...prev, [key]: value }))
   }
+
+  // Section Title Component
+  const SectionTitle = () => (
+    <div className="text-center mb-12">
+      <h2 className="text-3xl font-bold text-gray-900 relative inline-block">
+        What People Say
+        <div 
+          className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-primary/60 to-purple-500/60 rounded-full"
+          style={{
+            animation: 'expandWidth 0.8s ease-out forwards',
+            animationDelay: '0.4s'
+          }}
+        />
+      </h2>
+      <p className="mt-4 text-lg text-gray-500">
+        Hear from our satisfied customers
+      </p>
+    </div>
+  )
+
+  // Testimonial Bubble Component
+  const TestimonialBubble = () => {
+    const currentContent = isEditing ? editedContent : content
+
+    return (
+      <div 
+        className="relative bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 shadow-lg"
+        style={{
+          animation: 'float 6s ease-in-out infinite'
+        }}
+      >
+        <EditableContent
+          isEditing={isEditing}
+          isPreview={isPreview}
+          content={{
+            description: currentContent.text,
+          }}
+          onContentChange={(_, value) => handleContentChange('text', value)}
+        />
+
+        <div className="flex items-center gap-4 mt-6">
+          <AvatarIcon />
+          <AuthorInfo />
+        </div>
+
+        <BubbleTail />
+      </div>
+    )
+  }
+
+  // Avatar Icon Component
+  const AvatarIcon = () => (
+    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center shadow-lg">
+      <User className="h-6 w-6 text-white" />
+    </div>
+  )
+
+  // Author Info Component
+  const AuthorInfo = () => {
+    const currentContent = isEditing ? editedContent : content
+
+    return (
+      <div>
+        <EditableContent
+          isEditing={isEditing}
+          isPreview={isPreview}
+          content={{
+            title: currentContent.author,
+            subtitle: currentContent.role
+          }}
+          onContentChange={(key, value) => {
+            handleContentChange(
+              key === 'title' ? 'author' : 'role',
+              value
+            )
+          }}
+        />
+      </div>
+    )
+  }
+
+  // Bubble Tail Component
+  const BubbleTail = () => (
+    <div 
+      className={cn(
+        "absolute -bottom-3 left-1/2 -translate-x-1/2",
+        "w-6 h-6 bg-gradient-to-br from-white to-gray-50",
+        "rotate-45 shadow-lg"
+      )} 
+    />
+  )
 
   return (
-    <section className="relative py-16 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-100 overflow-hidden">
-      {/* Animated background gradients */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div 
-          className="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-full mix-blend-multiply blur-3xl"
-          style={{
-            animation: 'moveUpDown 8s ease-in-out infinite'
-          }}
-        />
-        <div 
-          className="absolute -bottom-24 -left-24 w-96 h-96 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-full mix-blend-multiply blur-3xl"
-          style={{
-            animation: 'moveUpDown 8s ease-in-out infinite',
-            animationDelay: '-4s'
-          }}
-        />
+    <SectionWrapper>
+      {/* Complex gradient background with multiple layers */}
+      <BackgroundGradients colors={{
+        first: 'from-violet-500/20 to-purple-500/20',
+        second: 'from-blue-500/20 to-cyan-500/20'
+      }}>
         <div 
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-rose-500/10 to-orange-500/10 rounded-full mix-blend-multiply blur-3xl"
           style={{
@@ -63,105 +171,34 @@ export function SingleTestimonial({ id, initialData, isPreview }: SingleTestimon
             animationDelay: '-2s'
           }}
         />
-      </div>
+      </BackgroundGradients>
+
+      <EditorControls
+        isPreview={isPreview}
+        isEditing={isEditing}
+        onDelete={() => deleteComponent(id)}
+        onEdit={startEditing}
+        onSave={saveChanges}
+        componentType="testimonial-1"
+        onAIContent={handleAIContent}
+      />
 
       <div className="max-w-4xl mx-auto">
-        {/* Control Buttons - No white background */}
-        {!isPreview && (
-          <div className="absolute right-4 top-4 flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
-              onClick={() => deleteComponent(id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
-              onClick={isEditing ? saveChanges : startEditing}
-            >
-              {isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
-            </Button>
-          </div>
-        )}
-
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900">What People Say</h2>
-          <p className="mt-4 text-lg text-gray-500">Hear from our satisfied customers</p>
-        </div>
+        <SectionTitle />
 
         <div className="relative max-w-2xl mx-auto">
-          {/* Testimonial Bubble - Animated */}
-          <div 
-            className="relative bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 shadow-lg"
-            style={{
-              animation: 'float 6s ease-in-out infinite'
-            }}
-          >
-            {/* Quote content */}
-            {isEditing && !isPreview ? (
-              <Textarea
-                value={editedTestimonial.text}
-                onChange={(e) => setEditedTestimonial({ ...editedTestimonial, text: e.target.value })}
-                className="min-h-[120px] mb-6"
-                placeholder="Enter testimonial text..."
-              />
-            ) : (
-              <p className="text-lg text-gray-600 mb-6">{testimonial.text}</p>
-            )}
-
-            {/* Author info */}
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center shadow-lg">
-                <User className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                {isEditing && !isPreview ? (
-                  <div className="space-y-2">
-                    <Input
-                      value={editedTestimonial.author}
-                      onChange={(e) => setEditedTestimonial({ ...editedTestimonial, author: e.target.value })}
-                      placeholder="Author name"
-                      className="font-medium"
-                    />
-                    <Input
-                      value={editedTestimonial.role}
-                      onChange={(e) => setEditedTestimonial({ ...editedTestimonial, role: e.target.value })}
-                      placeholder="Author role"
-                      className="text-gray-500"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <div className="font-medium text-gray-900">{testimonial.author}</div>
-                    <div className="text-gray-500">{testimonial.role}</div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Decorative tail for the bubble */}
-            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-gradient-to-br from-white to-gray-50 rotate-45 shadow-lg" />
-          </div>
+          <TestimonialBubble />
         </div>
       </div>
 
       <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
-        }
-        
-        @keyframes moveUpDown {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-30px) scale(1.1); }
+        @keyframes expandWidth {
+          from { width: 0; }
+          to { width: 100%; }
         }
       `}</style>
-    </section>
+    </SectionWrapper>
   )
 }
 
-export default SingleTestimonial;
+export default SingleTestimonial

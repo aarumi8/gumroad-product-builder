@@ -1,126 +1,186 @@
-import { Edit2, Check, Trash2, Mail } from "lucide-react"
-import { useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { useComponents } from "@/context/component-context"
+import React, { useState, useEffect } from 'react'
+import { Mail } from 'lucide-react'
+import { useComponentEditor } from '@/hooks/useComponentEditor'
+import { EditorControls } from '@/components/building-blocks/editor-controls'
+import { BackgroundGradients } from '@/components/building-blocks/background-gradients'
+import { SectionWrapper } from '@/components/building-blocks/section-wrapper'
+import { EditableContent } from '@/components/building-blocks/editable-content'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
+
+interface NewsletterContent {
+  title: string
+  subtitle: string
+  buttonText: string
+  placeholder: string
+}
 
 interface NewsletterFormProps {
-  id: string;
-  initialData?: {
-    title: string;
-    subtitle: string;
-    buttonText: string;
-    placeholder?: string;
-  };
-  isPreview?: boolean;
+  id: string
+  initialData?: NewsletterContent
+  isPreview?: boolean
 }
 
 export function NewsletterForm({ id, initialData, isPreview }: NewsletterFormProps) {
-  const { deleteComponent, updateComponentContent, components } = useComponents()
-  const [isEditing, setIsEditing] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
 
-  // Get current component's content from context
-  const currentComponent = components.find(comp => comp.id === id)
-  const defaultContent = {
-    title: initialData?.title || "Subscribe to Our Newsletter",
-    subtitle: initialData?.subtitle || "Stay up to date with the latest news, announcements, and articles.",
-    buttonText: initialData?.buttonText || "Subscribe",
-    placeholder: initialData?.placeholder || "Enter your email"
-  }
-  
-  const content = currentComponent?.content || defaultContent
-  const [editedContent, setEditedContent] = useState(content)
-
-  const saveChanges = () => {
-    updateComponentContent(id, editedContent)
-    setIsEditing(false)
+  const defaultContent: NewsletterContent = {
+    title: "Subscribe to Our Newsletter",
+    subtitle: "Stay up to date with the latest news, announcements, and articles.",
+    buttonText: "Subscribe",
+    placeholder: "Enter your email"
   }
 
-  const startEditing = () => {
-    setEditedContent(content)
-    setIsEditing(true)
+  const {
+    content,
+    editedContent,
+    isEditing,
+    setEditedContent,
+    saveChanges,
+    startEditing,
+    deleteComponent
+  } = useComponentEditor<NewsletterContent>({
+    id,
+    defaultContent,
+    initialData
+  })
+
+  // Debug effect to monitor state changes
+  useEffect(() => {
+    console.log('Current editing state:', isEditing)
+    console.log('Current edited content:', editedContent)
+    console.log('Current content:', content)
+  }, [isEditing, editedContent, content])
+
+  const handleAIContent = (aiContent: any) => {
+    console.log('Step 1 - Raw AI content received:', aiContent)
+    
+    if (!aiContent || typeof aiContent !== 'object') {
+      console.error('Invalid AI content received:', aiContent)
+      return
+    }
+
+    // First, start editing mode
+    startEditing()
+
+    // Then format and set the content
+    const formattedContent: NewsletterContent = {
+      title: aiContent.title || defaultContent.title,
+      subtitle: aiContent.subtitle || aiContent.description || defaultContent.subtitle,
+      buttonText: aiContent.buttonText || defaultContent.buttonText,
+      placeholder: aiContent.placeholder || defaultContent.placeholder
+    }
+
+    console.log('Step 2 - Formatted content:', formattedContent)
+
+    // Force a new object reference to ensure React detects the change
+    setEditedContent({...formattedContent})
+    
+    console.log('Step 3 - EditedContent after update:', editedContent)
+  }
+
+  const handleContentChange = (key: keyof NewsletterContent, value: string) => {
+    console.log('Content change:', key, value)
+    setEditedContent(prev => ({ ...prev, [key]: value }))
+  }
+
+  const EmailInput = () => {
+    const currentContent = isEditing ? editedContent : content
+    console.log('Email Input current content:', currentContent)
+    
+    if (isEditing && !isPreview) {
+      return (
+        <Input
+          value={editedContent.placeholder}
+          onChange={(e) => handleContentChange('placeholder', e.target.value)}
+          className="border-0 bg-transparent"
+          placeholder="Enter placeholder text..."
+        />
+      )
+    }
+
+    return (
+      <input
+        type="email"
+        placeholder={currentContent.placeholder}
+        className="flex-1 py-2 px-3 bg-transparent border-0 outline-none text-gray-900 placeholder-gray-500"
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+      />
+    )
+  }
+
+  const SubmitButton = () => {
+    const currentContent = isEditing ? editedContent : content
+    console.log('Submit Button current content:', currentContent)
+    
+    if (isEditing && !isPreview) {
+      return (
+        <Input
+          value={editedContent.buttonText}
+          onChange={(e) => handleContentChange('buttonText', e.target.value)}
+          className="sm:w-auto"
+          placeholder="Button text..."
+        />
+      )
+    }
+
+    return (
+      <Button 
+        className="group h-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 transition-all duration-300"
+      >
+        {currentContent.buttonText}
+        <svg
+          className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M14 5l7 7m0 0l-7 7m7-7H3"
+          />
+        </svg>
+      </Button>
+    )
   }
 
   return (
-    <section className="relative py-24 px-4 sm:px-6 lg:px-8 bg-white border-b border-gray-100 overflow-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div 
-          className="absolute -top-24 right-0 w-96 h-96 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full mix-blend-multiply blur-3xl"
-          style={{
-            animation: 'moveUpDown 8s ease-in-out infinite'
-          }}
-        />
-        <div 
-          className="absolute -bottom-24 left-0 w-96 h-96 bg-gradient-to-br from-rose-500/10 to-orange-500/10 rounded-full mix-blend-multiply blur-3xl"
-          style={{
-            animation: 'moveUpDown 8s ease-in-out infinite',
-            animationDelay: '-4s'
-          }}
-        />
-      </div>
+    <SectionWrapper>
+      <BackgroundGradients colors={{
+        first: 'from-blue-500/10 to-purple-500/10',
+        second: 'from-rose-500/10 to-orange-500/10'
+      }} />
+
+      <EditorControls
+        isPreview={isPreview}
+        isEditing={isEditing}
+        onDelete={() => deleteComponent(id)}
+        onEdit={startEditing}
+        onSave={saveChanges}
+        componentType="newsletter-form"
+        onAIContent={handleAIContent}
+      />
 
       <div className="max-w-4xl mx-auto">
-        {/* Control Buttons */}
-        {!isPreview && (
-          <div className="absolute right-4 top-4 flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 text-gray-600 hover:text-red-500 hover:border-red-500"
-              onClick={() => deleteComponent(id)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className={`h-8 w-8 ${isEditing ? 'text-green-600 hover:text-green-700 hover:border-green-700' : 'text-gray-600 hover:text-gray-700'}`}
-              onClick={isEditing ? saveChanges : startEditing}
-            >
-              {isEditing ? <Check className="h-4 w-4" /> : <Edit2 className="h-4 w-4" />}
-            </Button>
-          </div>
-        )}
-
         <div className="max-w-2xl mx-auto text-center">
-          {isEditing && !isPreview ? (
-            <div className="space-y-4 mb-8">
-              <Input
-                value={editedContent.title}
-                onChange={(e) => setEditedContent({ ...editedContent, title: e.target.value })}
-                className="text-center text-xl font-bold"
-                placeholder="Enter title..."
-              />
-              <Input
-                value={editedContent.subtitle}
-                onChange={(e) => setEditedContent({ ...editedContent, subtitle: e.target.value })}
-                className="text-center"
-                placeholder="Enter subtitle..."
-              />
-            </div>
-          ) : (
-            <div 
-              className="mb-8"
-              style={{
-                animation: 'fadeIn 0.8s ease-out'
+          {/* Title Section */}
+          <div className="mb-8">
+            <EditableContent
+              isEditing={isEditing}
+              isPreview={isPreview}
+              content={{
+                title: isEditing ? editedContent.title : content.title,
+                subtitle: isEditing ? editedContent.subtitle : content.subtitle
               }}
-            >
-              <div className="relative inline-block">
-                <h2 className="text-4xl font-bold text-gray-900 mb-4">{content.title}</h2>
-                {/* Animated underline */}
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-1 bg-gradient-to-r from-primary/60 to-purple-500/60 rounded-full"
-                  style={{
-                    animation: 'expandWidth 0.8s ease-out forwards',
-                    animationDelay: '0.4s'
-                  }}
-                />
-              </div>
-              <p className="mt-6 text-lg text-gray-600">{content.subtitle}</p>
-            </div>
-          )}
+              onContentChange={handleContentChange}
+            />
+          </div>
 
+          {/* Form Section */}
           <div 
             className="max-w-md mx-auto"
             style={{
@@ -131,87 +191,29 @@ export function NewsletterForm({ id, initialData, isPreview }: NewsletterFormPro
               onSubmit={(e) => e.preventDefault()} 
               className="relative flex flex-col sm:flex-row gap-3"
             >
+              {/* Email Input Container */}
               <div className="relative flex-1">
-                <div className={`
-                  absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-lg blur opacity-0 transition-opacity duration-300
-                  ${isFocused ? 'opacity-100' : ''}
-                `} />
+                <div className={cn(
+                  "absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-lg blur opacity-0 transition-opacity duration-300",
+                  isFocused && "opacity-100"
+                )} />
                 <div className="relative bg-white border-2 border-gray-200 rounded-lg flex items-center transition-colors duration-300">
-                  <Mail className={`ml-3 h-5 w-5 transition-colors duration-300 ${isFocused ? 'text-primary' : 'text-gray-400'}`} />
-                  {isEditing && !isPreview ? (
-                    <Input
-                      value={editedContent.placeholder}
-                      onChange={(e) => setEditedContent({ ...editedContent, placeholder: e.target.value })}
-                      className="border-0 bg-transparent"
-                      placeholder="Enter placeholder text..."
-                    />
-                  ) : (
-                    <input
-                      type="email"
-                      placeholder={content.placeholder}
-                      className="flex-1 py-2 px-3 bg-transparent border-0 outline-none text-gray-900 placeholder-gray-500"
-                      onFocus={() => setIsFocused(true)}
-                      onBlur={() => setIsFocused(false)}
-                    />
-                  )}
+                  <Mail className={cn(
+                    "ml-3 h-5 w-5 transition-colors duration-300",
+                    isFocused ? 'text-primary' : 'text-gray-400'
+                  )} />
+                  <EmailInput />
                 </div>
               </div>
 
-              {isEditing && !isPreview ? (
-                <Input
-                  value={editedContent.buttonText}
-                  onChange={(e) => setEditedContent({ ...editedContent, buttonText: e.target.value })}
-                  className="sm:w-auto"
-                  placeholder="Button text..."
-                />
-              ) : (
-                <Button 
-                  className="group h-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 transition-all duration-300"
-                >
-                  {content.buttonText}
-                  <svg
-                    className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M14 5l7 7m0 0l-7 7m7-7H3"
-                    />
-                  </svg>
-                </Button>
-              )}
+              {/* Submit Button */}
+              <SubmitButton />
             </form>
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes moveUpDown {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-20px) scale(1.1); }
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(40px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes expandWidth {
-          from { width: 0; }
-          to { width: 100px; }
-        }
-      `}</style>
-    </section>
+    </SectionWrapper>
   )
 }
 
-export default NewsletterForm;
+export default NewsletterForm
