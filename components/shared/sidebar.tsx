@@ -26,11 +26,12 @@ const sections: Section[] = [
       { 
         id: "ebook", 
         title: "Ebook Template",
-        imageUrl: "/assets/images/temp.jpg"
+        imageUrl: "/assets/images/temp1.jpg"
       },
       { 
         id: "course", 
         title: "Course Template",
+        imageUrl: "/assets/images/temp2.jpg"
       },
     ]
   },
@@ -40,10 +41,12 @@ const sections: Section[] = [
       { 
         id: "hero-1", 
         title: "Image Right + Text Left",
+        imageUrl: "/assets/images/hero1.jpg"
       },
       { 
         id: "hero-2", 
         title: "Two Images + Text",
+        imageUrl: "/assets/images/hero2.jpg"
       },
     ]
   },
@@ -52,11 +55,13 @@ const sections: Section[] = [
     items: [
       { 
         id: "form-1", 
-        title: "Contact Form"
+        title: "Contact Form",
+        imageUrl: "/assets/images/form1.jpg"
       },
       { 
         id: "form-2", 
-        title: "Newsletter Subscription"
+        title: "Newsletter Subscription",
+        imageUrl: "/assets/images/form2.jpg"
       },
     ]
   },
@@ -66,10 +71,12 @@ const sections: Section[] = [
       { 
         id: "image-1", 
         title: "Text + Big Image",
+        imageUrl: "/assets/images/img1.jpg"
       },
       { 
         id: "image-2", 
         title: "Grid Images + Text",
+        imageUrl: "/assets/images/img2.jpg"
       },
     ]
   },
@@ -78,7 +85,8 @@ const sections: Section[] = [
     items: [
       { 
         id: "features-1", 
-        title: "Cozy Link List"
+        title: "Cozy Link List",
+        imageUrl: "/assets/images/features1.jpg"
       },
     ]
   },
@@ -88,10 +96,12 @@ const sections: Section[] = [
       { 
         id: "testimonial-1", 
         title: "Single Testimonial with Image",
+        imageUrl: "/assets/images/test1.jpg"
       },
       { 
         id: "testimonial-2", 
-        title: "Three Text Testimonials"
+        title: "Three Text Testimonials",
+        imageUrl: "/assets/images/test2.jpg"
       },
     ]
   },
